@@ -13,7 +13,7 @@ const MAX_NODES = 500;
 const MAX_QUERY_TEXT = 12000;
 let driver: Driver | undefined;
 
-function getDriver(): Driver {
+export function getDriver(): Driver {
   if (!driver) {
     const uri = process.env.NEO4J_URI;
     const username = process.env.NEO4J_USERNAME;
@@ -24,7 +24,7 @@ function getDriver(): Driver {
   return driver;
 }
 
-function database() {
+export function database() {
   return process.env.NEO4J_DATABASE || "neo4j";
 }
 
