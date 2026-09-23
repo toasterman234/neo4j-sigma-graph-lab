@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Sigma from "sigma";
+import Graph from "graphology";
 import { colorFor, kindOf } from "@/lib/explore";
 
 export type TrailItem = { id: string; title: string };
@@ -41,10 +43,19 @@ function shortKind(kind: string): string {
   return map[kind] || kind.slice(0, 5).toUpperCase();
 }
 
-const W = 360;
-const H = 236;
-const CX = 180;
-const CY = 108;
+function deriveNeighbors(focusId: string, nodes: PayloadNode[], rels: PayloadRel[]): Neighbor[] {
+  const seen = new Set<string>();
+  const neighbors: Neighbor[] = [];
+  for (const r of rels) {
+    const otherId = r.source === focusId ? r.target : r.target === focusId ? r.source : null;
+    if (!otherId || seen.has(otherId)) continue;
+    const node = nodes.find((n) => n.id === otherId);
+    if (!node) continue;
+    seen.add(otherId);
+    neighbors.push({ node, relType: r.type, outward: r.source === focusId });
+  }
+  return neighbors;
+}
 
 export function FocusGraph({
   focusId,
@@ -64,6 +75,11 @@ export function FocusGraph({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sigmaRef = useRef<Sigma | null>(null);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     let cancelled = false;
@@ -93,25 +109,58 @@ export function FocusGraph({
   }, [focusId]);
 
   const center = nodes.find((n) => n.id === focusId);
-  const seen = new Set<string>();
-  const neighbors: Neighbor[] = [];
-  for (const r of rels) {
-    const otherId = r.source === focusId ? r.target : r.target === focusId ? r.source : null;
-    if (!otherId || seen.has(otherId)) continue;
-    const node = nodes.find((n) => n.id === otherId);
-    if (!node) continue;
-    seen.add(otherId);
-    neighbors.push({ node, relType: r.type, outward: r.source === focusId });
-  }
+  const neighbors = deriveNeighbors(focusId, nodes, rels);
   const shown = neighbors.slice(0, 14);
-  const positions = shown.map((_, i) => {
-    const a = (i / Math.max(1, shown.length)) * 2 * Math.PI - Math.PI / 2;
-    return { x: CX + Math.cos(a) * 148, y: CY + Math.sin(a) * 92 };
-  });
 
   const centerKind = center ? kindOf(center.labels, center.properties.kind) : "Note";
   const centerText = center ? textOf(center.properties) : "";
   const showText = expanded || centerText.length <= 420;
+
+  useEffect(() => {
+    if (!containerRef.current || !center || shown.length === 0) return;
+    const graph = new Graph({ type: "directed", multi: false });
+    graph.addNode(focusId, {
+      label: shortKind(centerKind),
+      color: colorFor(centerKind),
+      size: 22,
+      x: 0,
+      y: 0,
+    });
+    shown.forEach((nb, i) => {
+      const a = (i / Math.max(1, shown.length)) * 2 * Math.PI - Math.PI / 2;
+      const k = kindOf(nb.node.labels, nb.node.properties.kind);
+      graph.addNode(nb.node.id, {
+        label: shortKind(k),
+        color: colorFor(k),
+        size: 11,
+        x: Math.cos(a) * 3,
+        y: Math.sin(a) * 3,
+      });
+      const attrs = { label: nb.relType, color: "#475569", size: 2.5 };
+      if (nb.outward) graph.addEdge(focusId, nb.node.id, attrs);
+      else graph.addEdge(nb.node.id, focusId, attrs);
+    });
+    sigmaRef.current?.kill();
+    const renderer = new Sigma(graph, containerRef.current, {
+      renderEdgeLabels: true,
+      defaultEdgeType: "arrow",
+      labelColor: { color: "#e2e8f0" },
+      edgeLabelColor: { color: "#7dd3fc" },
+      labelSize: 13,
+      edgeLabelSize: 11,
+      minCameraRatio: 0.15,
+      maxCameraRatio: 5,
+    });
+    renderer.on("clickNode", ({ node }) => {
+      if (node !== focusId) onSelectRef.current(String(node));
+    });
+    sigmaRef.current = renderer;
+    return () => {
+      renderer.kill();
+      if (sigmaRef.current === renderer) sigmaRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, nodes, rels]);
 
   return (
     <div>
@@ -180,38 +229,17 @@ export function FocusGraph({
       )}
 
       {!loading && !error && neighbors.length > 0 && (
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", marginBottom: 4 }}>
-          {shown.map((nb, i) => {
-            const p = positions[i];
-            return (
-              <line
-                key={nb.node.id}
-                x1={CX}
-                y1={CY}
-                x2={p.x}
-                y2={p.y}
-                stroke="#2a3552"
-                strokeWidth={1.2}
-              />
-            );
-          })}
-          {shown.map((nb, i) => {
-            const p = positions[i];
-            const kind = kindOf(nb.node.labels, nb.node.properties.kind);
-            return (
-              <g key={nb.node.id} onClick={() => onSelect(nb.node.id)} style={{ cursor: "pointer" }}>
-                <circle cx={p.x} cy={p.y} r={17} fill={colorFor(kind)} />
-                <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize={8.5} fill="#0b0f1a" fontWeight={700}>
-                  {shortKind(kind)}
-                </text>
-              </g>
-            );
-          })}
-          <circle cx={CX} cy={CY} r={26} fill={colorFor(centerKind)} />
-          <text x={CX} y={CY + 3.5} textAnchor="middle" fontSize={10} fill="#0b0f1a" fontWeight={700}>
-            {shortKind(centerKind)}
-          </text>
-        </svg>
+        <div
+          ref={containerRef}
+          style={{
+            width: "100%",
+            height: 300,
+            marginBottom: 4,
+            background: "#0a0f1f",
+            border: "1px solid #1c2440",
+            borderRadius: 12,
+          }}
+        />
       )}
 
       {!loading && !error && neighbors.length === 0 && center && (
