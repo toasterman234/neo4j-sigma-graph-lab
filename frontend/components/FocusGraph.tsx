@@ -30,17 +30,11 @@ function sourceOf(props: Record<string, any>): string {
 function kindLabel(kind: string): string {
   return kind === "MuseNote" ? "Muse note" : kind;
 }
-function shortKind(kind: string): string {
-  const map: Record<string, string> = {
-    Thought: "THOUGHT",
-    Idea: "IDEA",
-    Preference: "PREF",
-    Goal: "GOAL",
-    Document: "DOC",
-    MuseNote: "NOTE",
-    Observation: "OBS",
-  };
-  return map[kind] || kind.slice(0, 5).toUpperCase();
+function nodeLabel(props: Record<string, any>, max = 26): string {
+  const raw = titleOf(props) === "untitled" ? textOf(props) : titleOf(props);
+  const s = raw.trim().replace(/\s+/g, " ");
+  if (!s) return "untitled";
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
 function deriveNeighbors(focusId: string, nodes: PayloadNode[], rels: PayloadRel[]): Neighbor[] {
@@ -75,6 +69,8 @@ export function FocusGraph({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [topCollapsed, setTopCollapsed] = useState(false);
+  const [bottomCollapsed, setBottomCollapsed] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sigmaRef = useRef<Sigma | null>(null);
@@ -130,7 +126,7 @@ export function FocusGraph({
       halo: true,
     });
     graph.addNode(focusId, {
-      label: shortKind(centerKind),
+      label: "",
       color: colorFor(centerKind),
       size: 20,
       x: 0,
@@ -140,7 +136,7 @@ export function FocusGraph({
       const a = (i / Math.max(1, shown.length)) * 2 * Math.PI - Math.PI / 2;
       const k = kindOf(nb.node.labels, nb.node.properties.kind);
       graph.addNode(nb.node.id, {
-        label: shortKind(k),
+        label: nodeLabel(nb.node.properties),
         color: colorFor(k),
         size: 11,
         x: Math.cos(a) * 3,
@@ -164,7 +160,7 @@ export function FocusGraph({
       defaultEdgeType: "arrow",
       labelColor: { color: "#e2e8f0" },
       edgeLabelColor: { color: "#7dd3fc" },
-      labelSize: 13,
+      labelSize: 12,
       edgeLabelSize: 11,
       minCameraRatio: 0.15,
       maxCameraRatio: 5,
@@ -198,7 +194,10 @@ export function FocusGraph({
       onSelectRef.current(String(node));
     });
     sigmaRef.current = renderer;
+    const onResize = () => renderer.refresh();
+    window.addEventListener("resize", onResize);
     return () => {
+      window.removeEventListener("resize", onResize);
       renderer.kill();
       if (sigmaRef.current === renderer) sigmaRef.current = null;
     };
@@ -231,7 +230,36 @@ export function FocusGraph({
         </div>
       )}
 
-      {center && (
+      {center && topCollapsed && (
+        <button
+          onClick={() => setTopCollapsed(false)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "100%",
+            borderRadius: 12,
+            background: "#172033",
+            border: "1px solid #2b3a5f",
+            borderLeft: `4px solid ${colorFor(centerKind)}`,
+            padding: "9px 12px",
+            marginBottom: 10,
+            cursor: "pointer",
+            color: "#f1f5f9",
+            fontSize: 13.5,
+            fontWeight: 600,
+            textAlign: "left",
+          }}
+        >
+          <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 5, background: colorFor(centerKind), flex: "0 0 auto" }} />
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {titleOf(center.properties)}
+          </span>
+          <span style={{ marginLeft: "auto", color: "#5eead4", flex: "0 0 auto" }}>＋</span>
+        </button>
+      )}
+
+      {center && !topCollapsed && (
         <div
           style={{
             borderRadius: 14,
@@ -245,8 +273,15 @@ export function FocusGraph({
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#8b94ad", marginBottom: 6 }}>
             <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 5, background: colorFor(centerKind) }} />
             {kindLabel(centerKind)}
-            <span style={{ marginLeft: "auto" }}>
+            <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
               {center.properties.date ? String(center.properties.date) : ""}
+              <button
+                onClick={() => setTopCollapsed(true)}
+                aria-label="Collapse note card"
+                style={{ background: "none", border: "none", color: "#5eead4", fontSize: 15, cursor: "pointer", padding: "0 2px" }}
+              >
+                －
+              </button>
             </span>
           </div>
           <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, lineHeight: 1.3, color: "#f1f5f9" }}>
@@ -281,6 +316,8 @@ export function FocusGraph({
             background: "#0a0f1f",
             border: "1px solid #1c2440",
             borderRadius: 12,
+            position: "relative",
+            overflow: "hidden",
           }}
         />
       )}
@@ -293,9 +330,27 @@ export function FocusGraph({
 
       {!loading && neighbors.length > 0 && (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 650, color: "#94a3b8", margin: "6px 0 8px", letterSpacing: 0.4 }}>
+          <button
+            onClick={() => setBottomCollapsed((v) => !v)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              background: "none",
+              border: "none",
+              fontSize: 12,
+              fontWeight: 650,
+              color: "#94a3b8",
+              margin: "6px 0 8px",
+              letterSpacing: 0.4,
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
             CONNECTED · {neighbors.length}
-          </div>
+            <span style={{ marginLeft: 6, color: "#5eead4" }}>{bottomCollapsed ? "＋" : "－"}</span>
+          </button>
+          {!bottomCollapsed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {neighbors.slice(0, 30).map((nb) => {
               const kind = kindOf(nb.node.labels, nb.node.properties.kind);
@@ -341,6 +396,7 @@ export function FocusGraph({
               );
             })}
           </div>
+          )}
         </div>
       )}
     </div>
