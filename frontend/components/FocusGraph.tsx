@@ -70,7 +70,8 @@ export function FocusGraph({
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [topCollapsed, setTopCollapsed] = useState(false);
-  const [bottomCollapsed, setBottomCollapsed] = useState(false);
+  const [bottomCollapsed, setBottomCollapsed] = useState(true);
+  const graphHeight = 300 + (bottomCollapsed ? 260 : 0) + (topCollapsed ? 140 : 0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sigmaRef = useRef<Sigma | null>(null);
@@ -204,6 +205,11 @@ export function FocusGraph({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusId, nodes, rels]);
 
+  // Re-fit the sigma canvas after collapse toggles resize its container.
+  useEffect(() => {
+    sigmaRef.current?.refresh();
+  }, [graphHeight]);
+
   return (
     <div>
       {trail.length > 0 && (
@@ -311,7 +317,7 @@ export function FocusGraph({
           ref={containerRef}
           style={{
             width: "100%",
-            height: 300,
+            height: graphHeight,
             marginBottom: 4,
             background: "#0a0f1f",
             border: "1px solid #1c2440",
