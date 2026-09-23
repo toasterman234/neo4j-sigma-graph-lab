@@ -58,4 +58,4 @@
 ## 2026-09-23 — GitHub update
 - Prepared the pending implementation changes for `origin/main` at `toasterman234/neo4j-sigma-graph-lab`.
 - Final verification before publish: frontend typecheck/build passed, backend tests passed, SQLite restart/size-limit checks passed, and `git diff --check` passed.
-- Commit and push are the remaining publication actions.
+- Committed as `744ea4d` (`Add graph-wide Jev search and SQLite result persistence`) and pushed to `origin/main`.
