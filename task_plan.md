@@ -4,7 +4,7 @@
 Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j database, with human-readable source inspection and bounded whole-graph retrieval followed by server-side Jev reasoning.
 
 ## Current Phase
-- Phase 8: Jev result presentation
+- Phase 11: Proposed schema interaction fixes
 
 ## Phases
 
@@ -58,6 +58,27 @@ Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j d
 - [x] Verify typecheck, build, saved-result reopening, and read-only protections.
 - **Status:** complete
 
+### Phase 9: Proposed schema modeling
+- [x] Add a separate Proposed Schema graph view to the Modeling tab.
+- [x] Add bounded lookup-to-proposal generation with Jev evaluation.
+- [x] Persist proposal cards and append-only Yes/No/Defer decisions in SQLite.
+- [x] Add proposal graph rendering with pending/accepted/rejected visual states.
+- [x] Verify proposal generation, decisions, persistence, typecheck, build, and Neo4j read-only behavior.
+- **Status:** complete
+
+### Phase 10: Human-readable graph presentation
+- [x] Replace technical semantic-node labels and IDs with human-readable names in the explorer and search results.
+- [x] Improve source content/path presentation and keep technical evidence behind an explicit drawer.
+- [x] Use human-readable relationship labels and proposal titles.
+- [x] Verify live graph/search output, source content, typecheck, build, and read-only behavior.
+- **Status:** complete
+
+### Phase 11: Proposed schema interaction fixes
+- [x] Normalize legacy persisted proposal labels/evidence before display.
+- [x] Make Proposed Schema graph nodes and edges select their proposal detail card.
+- [x] Verify no technical labels remain in the proposal graph and node clicks select details.
+- **Status:** complete
+
 ## Decisions
 - Issue #1 uses a read-only presentation-layer adapter: Chunk nodes sharing source identity are grouped into logical Document/Source nodes without changing Neo4j data.
 - Source creation dates are shown only when explicit metadata exists; storage/ingestion values are not relabeled as original creation dates.
@@ -69,6 +90,9 @@ Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j d
 - Whole-graph retrieval is bounded before Jev; the full graph is never sent to Jev.
 - Jev receives typed decision questions over a compact evidence package, while evidence excerpts and provisional relationship suggestions are assembled by the application.
 - Saved results use local SQLite and are explicit user saves; no graph data or Jev result is written to Neo4j.
+- Schema proposals are local review artifacts. Accepting a proposal adds it to the Proposed Schema graph only; it never writes Neo4j.
+- The explorer's primary display is source-centric: technical Chunk/Entity/DocumentId labels and IDs are hidden or adapted to human names; raw evidence remains opt-in.
+- Legacy SQLite proposals are normalized at read time so persisted technical labels cannot reappear in the Proposed Schema graph.
 
 ## Errors
 | Attempt | Error | Resolution |

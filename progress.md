@@ -67,3 +67,29 @@
 - Prepared the pending implementation changes for `origin/main` at `toasterman234/neo4j-sigma-graph-lab`.
 - Final verification before publish: frontend typecheck/build passed, backend tests passed, SQLite restart/size-limit checks passed, and `git diff --check` passed.
 - Committed as `744ea4d` (`Add graph-wide Jev search and SQLite result persistence`) and pushed to `origin/main`.
+
+## 2026-09-23 — Proposed schema modeling
+- Added a separate Proposed Schema graph view to the Modeling tab with bounded lookup and a proposal queue.
+- Added `GET/POST/PATCH /api/modeling/proposals`; draft generation retrieves bounded graph context, asks Jev for typed relationship evaluation, and creates local node-type, observed-pattern, and provisional-relationship proposals.
+- Added SQLite `model_proposals` and append-only `proposal_decisions` tables. Yes/No/Defer decisions update only the local proposed schema projection; Neo4j remains untouched.
+- Added pending/accepted/deferred/rejected graph styling, evidence cards, confidence, rationale, and explicit read-only/local-model safety labels.
+- Verified frontend typecheck and production build passed.
+- Verified live Process lookup drafted 4 proposals, accepted one through PATCH, persisted the decision through GET, and rejected a Neo4j mutation with HTTP 400.
+- `npm run lint` remains blocked because the repository has no ESLint 9 flat config; browser E2E has not been run.
+
+## 2026-09-23 — Human-readable graph presentation
+- Added a shared display adapter for semantic nodes and relationships. Values such as `x-amz-bedrock-kb-process run` now display as `Process Run` / `Concept` instead of exposing `Entity 2432` or Neptune IDs.
+- Kept the graph source-centric: Chunk nodes collapse into documents, opaque DocumentId/Entity records are omitted when no human name exists, and technical evidence remains opt-in.
+- Search results now show document filenames, named concepts, readable relationship labels, and content excerpts without raw Neptune/ingestion keys.
+- Source paths now shorten to the vault workspace path; source content prefers readable `parentText` with chunk text fallback.
+- Verified live Process search returned `Process.md`, `Process Run`, `Event`, `Work Item`, `Project`, `Step`, and `Plan` with no `Entity`, `DocumentId`, or `neptune_` display values.
+- Verified live proposal drafting now produces only human titles such as `Document -[contains]-> Concept` and `Concept -[evidenced by]-> Document`; technical Document reference proposals are filtered out.
+- Verified frontend typecheck and production build passed; mutation rejection remained HTTP 400.
+- `npm run lint` remains blocked because the repository has no ESLint 9 flat config; browser E2E has not been run.
+
+## 2026-09-23 — Proposed schema interaction fixes
+- Normalized legacy SQLite proposal records at read time, including stored `Chunk`/`Entity` labels, IDs, titles, and evidence labels.
+- Added Proposed Schema Sigma node and edge click handlers; clicking a graph item now selects its proposal detail card and decision controls.
+- Verified current proposal API returns human labels only, with no `Entity`, `Chunk`, or `DocumentId` titles/labels and no duplicated concept-type prefix.
+- Verified frontend typecheck and production build passed; `/modeling` returned HTTP 200.
+- Browser-level click verification remains outstanding; `npm run lint` remains blocked because the repository has no ESLint 9 flat config.

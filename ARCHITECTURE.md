@@ -41,12 +41,19 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 | `GET /api/results` | Lists saved Jev result summaries from local SQLite |
 | `POST /api/results` | Saves one explicit Jev result and its bounded evidence to local SQLite |
 | `GET /api/explorer/expand` | Immediate neighbors for one Neo4j internal node id |
+| `GET/POST/PATCH /api/modeling/proposals` | Lists, drafts, and records local schema proposal decisions |
 
 ## Document/Source presentation layer
 
 The API continues to return the underlying bounded node/relationship payload. Before rendering, `frontend/lib/documentSource.ts` groups Chunk nodes sharing a source URI/path into one logical `Document`/`Source` node. It derives a filename, relative path, source type, and explicit provenance dates, reconstructs readable content from ordered chunk text, and associates connected semantic nodes such as projects, decisions, systems, processes, services, and tasks.
 
-The inspector presents that semantic source view by default. Individual chunk properties remain available through the raw evidence toggle and expansion flow. Missing original creation metadata is shown as `Unknown`; S3 `LastModified` or ingestion values are not relabeled as document creation dates. This is browser-side presentation logic only and does not mutate Neo4j.
+The inspector presents that semantic source view by default. Individual chunk properties remain available through the raw evidence toggle and expansion flow. Missing original creation metadata is shown as `Unknown`; S3 `LastModified` or ingestion values are not relabeled as document creation dates. Source content prefers readable `parentText` when it is available, with chunk text as a fallback. Vault paths are shortened to the human workspace path rather than showing the storage URI.
+
+Semantic nodes are also adapted for display: values such as `x-amz-bedrock-kb-process run` become `Process Run` with the display category `Concept`; technical `Chunk`, `DocumentId`, and opaque `Entity` nodes are hidden or represented as `Document`/`Concept` only when a human name can be derived. Relationship labels are shown as readable phrases. Numeric Neo4j IDs, Neptune IDs, ingestion keys, and raw metadata remain behind the explicit technical-evidence control. This is browser/server presentation logic only and does not mutate Neo4j.
+
+## Human-readable display contract
+
+The primary explorer view is source-centric. A source card shows its filename, shortened workspace path, readable contents, source type, explicit created/modified/ingested dates, and connected named concepts. Dates remain `Unknown` when the source does not provide them. Search results use the same display adapter, so technical labels are not reintroduced by graph-wide search.
 
 ## Graph contract
 
@@ -79,6 +86,12 @@ The explorer presents Jev output as typed answer cards rather than raw JSON: `no
 
 Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.data/graph-lab.sqlite` using SQLite. The database is local, ignored by Git, capped at 100 saved runs, and stores the query, search scope/mode, typed judgment, confidence, bounded evidence, and provisional suggestions. It does not store Neo4j credentials or write back to Neo4j.
 
+## Proposed schema modeling
+
+The Modeling tab has a separate Proposed Schema view backed by `ModelingProposalWorkspace`. A lookup runs bounded server-side retrieval, sends only the bounded context to Jev, and stores reviewable node-type, observed relationship-pattern, and provisional relationship proposals in SQLite. The graph renders pending proposals in amber, accepted proposals in green, and deferred proposals in gray; rejected proposals are removed from the schema view. Each proposal retains evidence, rationale, confidence, and its current decision.
+
+Accepting a proposal means "add to the local proposed schema graph" only. Decisions are recorded in `proposal_decisions` as an append-only decision history while `model_proposals` provides the current projection. There is intentionally no publish/write action in this feature, so the live Neo4j graph remains read-only.
+
 ## Read-only controls
 
 - Neo4j sessions use `defaultAccessMode: neo4j.session.READ` for search/expansion.
@@ -86,6 +99,7 @@ Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.da
 - Mutation keywords including `CREATE`, `MERGE`, `DELETE`, `SET`, `REMOVE`, `DROP`, `LOAD CSV`, and privilege operations are rejected.
 - Result limits are clamped server-side.
 - No seed/reset/migration code belongs in the explorer path.
+- Proposal acceptance updates only local SQLite state and the browser's proposed schema graph.
 
 This is defense in depth, not a database permission substitute. The configured Neo4j user should also have read-only permissions when this is deployed beyond local development.
 

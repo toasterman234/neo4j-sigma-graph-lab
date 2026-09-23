@@ -32,7 +32,7 @@ function databasePath(): string {
   return path.isAbsolute(configured) ? configured : path.resolve(process.cwd(), configured);
 }
 
-function getDatabase(): Database.Database {
+export function getResultDatabase(): Database.Database {
   if (database) return database;
   const file = databasePath();
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -87,7 +87,7 @@ export function saveJevResult(input: { query: string; scope: SearchScope; mode: 
     evidenceJson: json(Array.isArray(result.evidence) ? result.evidence.slice(0, 24) : [], "evidence"),
     proposedRelationshipsJson: json(Array.isArray(result.proposedRelationships) ? result.proposedRelationships.slice(0, 12) : [], "proposedRelationships"),
   };
-  const db = getDatabase();
+  const db = getResultDatabase();
   const insert = db.prepare(`INSERT INTO saved_jev_results (created_at, query, scope, mode, question, bounded_node_count, bounded_relationship_count, result_count, judgment_json, confidence_json, evidence_json, proposed_relationships_json) VALUES (@createdAt, @query, @scope, @mode, @question, @boundedNodeCount, @boundedRelationshipCount, @resultCount, @judgmentJson, @confidenceJson, @evidenceJson, @proposedRelationshipsJson)`);
   const info = insert.run(row);
   db.prepare(`DELETE FROM saved_jev_results WHERE id NOT IN (SELECT id FROM saved_jev_results ORDER BY created_at DESC LIMIT ?)`).run(MAX_SAVED_RESULTS);
@@ -95,12 +95,12 @@ export function saveJevResult(input: { query: string; scope: SearchScope; mode: 
 }
 
 export function listSavedJevResults(): StoredResult[] {
-  const rows = getDatabase().prepare(`SELECT id, created_at AS createdAt, query, scope, mode, question, bounded_node_count AS boundedNodeCount, bounded_relationship_count AS boundedRelationshipCount, result_count AS resultCount, judgment_json AS judgmentJson, confidence_json AS confidenceJson, evidence_json AS evidenceJson, proposed_relationships_json AS proposedRelationshipsJson FROM saved_jev_results ORDER BY created_at DESC LIMIT ?`).all(MAX_SAVED_RESULTS) as Array<Record<string, unknown>>;
+  const rows = getResultDatabase().prepare(`SELECT id, created_at AS createdAt, query, scope, mode, question, bounded_node_count AS boundedNodeCount, bounded_relationship_count AS boundedRelationshipCount, result_count AS resultCount, judgment_json AS judgmentJson, confidence_json AS confidenceJson, evidence_json AS evidenceJson, proposed_relationships_json AS proposedRelationshipsJson FROM saved_jev_results ORDER BY created_at DESC LIMIT ?`).all(MAX_SAVED_RESULTS) as Array<Record<string, unknown>>;
   return rows.map(parseRow);
 }
 
 export function getSavedJevResult(id: number): StoredResult | undefined {
-  const row = getDatabase().prepare(`SELECT id, created_at AS createdAt, query, scope, mode, question, bounded_node_count AS boundedNodeCount, bounded_relationship_count AS boundedRelationshipCount, result_count AS resultCount, judgment_json AS judgmentJson, confidence_json AS confidenceJson, evidence_json AS evidenceJson, proposed_relationships_json AS proposedRelationshipsJson FROM saved_jev_results WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
+  const row = getResultDatabase().prepare(`SELECT id, created_at AS createdAt, query, scope, mode, question, bounded_node_count AS boundedNodeCount, bounded_relationship_count AS boundedRelationshipCount, result_count AS resultCount, judgment_json AS judgmentJson, confidence_json AS confidenceJson, evidence_json AS evidenceJson, proposed_relationships_json AS proposedRelationshipsJson FROM saved_jev_results WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
   return row ? parseRow(row) : undefined;
 }
 

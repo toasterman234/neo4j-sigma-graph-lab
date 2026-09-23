@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import neo4j, { type Driver, type Integer, type Record as Neo4jRecord, type Node as Neo4jNode } from "neo4j-driver";
 import Graph from "graphology";
 import { cypherToGraph } from "graphology-neo4j";
+import { displayLabel, humanizeLabel, humanizeNodeTitle, humanizeRelationship } from "@/lib/documentSource";
 
 for (const envPath of [path.resolve(process.cwd(), "../.env"), path.resolve(process.cwd(), ".env")]) {
   dotenv.config({ path: envPath, override: false });
@@ -124,14 +125,24 @@ function plain(value: unknown): unknown {
 }
 
 function displayTitle(labels: string[], properties: Record<string, unknown>, id: string): string {
-  return String(properties.name ?? properties.title ?? properties.path ?? properties.sourceUrl ?? `${labels[0] || "Node"} ${id}`);
+  const source = sourceUri(properties);
+  if (source || labels.includes("Chunk")) {
+    const clean = source ? decodeURIComponent(source.split(/[?#]/, 1)[0]).replace(/\\/g, "/") : "";
+    return clean.split("/").pop() || "Document";
+  }
+  return humanizeNodeTitle({ id, labels, properties }) || displayLabel({ id, labels, properties });
 }
 
 function displaySnippet(properties: Record<string, unknown>, query: string): string {
-  const raw = Object.entries(properties).map(([key, value]) => `${key}: ${plain(value)}`).join(" · ");
-  const match = raw.toLowerCase().indexOf(query.toLowerCase());
-  const start = match > 80 ? match - 80 : 0;
-  return raw.slice(start, start + MAX_SNIPPET);
+  const metadata = typeof properties.metadata === "string" ? (() => { try { return JSON.parse(properties.metadata) as Record<string, unknown>; } catch { return {}; } })() : {};
+  const content = String(properties.text ?? metadata.parentText ?? properties.summary ?? properties.description ?? "").replace(/\\n/g, " ").replace(/\\s+/g, " ").trim();
+  if (content) {
+    const match = content.toLowerCase().indexOf(query.toLowerCase());
+    const start = match > 80 ? match - 80 : 0;
+    return content.slice(start, start + MAX_SNIPPET);
+  }
+  const humanFields = Object.entries(properties).filter(([key]) => !key.startsWith("neptune_") && !key.startsWith("metadata") && !key.startsWith("@") && key !== "id").map(([key, value]) => `${humanizeNodeTitle({ id: "", labels: [key], properties: { value } }) || humanizeLabel(key)}: ${plain(value)}`).join(" · ");
+  return humanFields.slice(0, MAX_SNIPPET);
 }
 
 function sourceUri(properties: Record<string, unknown>): string | undefined {
@@ -146,12 +157,13 @@ function sourceUri(properties: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
-function nodeSearchResult(node: { id: string; labels: string[]; properties: Record<string, unknown> }, query: string): SearchResult {
+function nodeSearchResult(node: { id: string; labels: string[]; properties: Record<string, unknown> }, query: string): SearchResult | undefined {
   const source = node.labels.includes("Chunk") || Boolean(sourceUri(node.properties)) || "text" in node.properties;
+  if (!source && node.labels.some((label) => ["Entity", "SemanticEntity", "DocumentId"].includes(label)) && !humanizeNodeTitle(node)) return undefined;
   return {
     id: node.id,
     kind: source ? "source" : "node",
-    labels: node.labels,
+    labels: [source ? "Document" : displayLabel(node)],
     title: displayTitle(node.labels, node.properties, node.id),
     snippet: displaySnippet(node.properties, query),
     properties: node.properties,
@@ -184,8 +196,14 @@ export async function searchGraph(query: string, scope: SearchScope = "whole", m
     queryText = `MATCH (n)-[r]-(m) WHERE ${selectedPredicate}${nodePredicateFor("n")} RETURN n, r, m LIMIT $limit`;
   }
   const context = await graphFromCypher(queryText, params);
-  const nodeResults = context.nodes.slice(0, bounded).map((node) => nodeSearchResult(node as { id: string; labels: string[]; properties: Record<string, unknown> }, clean));
-  const relationshipResults = context.relationships.filter((edge) => mode === "relationship" || edge.type.toLowerCase().includes(clean.toLowerCase())).slice(0, bounded).map((edge) => ({ id: edge.id, kind: "relationship" as const, labels: [edge.type], title: edge.type, snippet: `${edge.source} ${edge.type} ${edge.target}`, sourceNodeIds: [edge.source, edge.target] }));
+  const nodeResults = context.nodes.slice(0, bounded).map((node) => nodeSearchResult(node as { id: string; labels: string[]; properties: Record<string, unknown> }, clean)).filter((result): result is SearchResult => Boolean(result));
+  const nodesById = new Map(context.nodes.map((node) => [node.id, node]));
+  const relationshipResults = context.relationships.filter((edge) => mode === "relationship" || edge.type.toLowerCase().includes(clean.toLowerCase())).slice(0, bounded).map((edge) => {
+    const source = nodesById.get(edge.source); const target = nodesById.get(edge.target);
+    const sourceTitle = source ? displayTitle(source.labels, source.properties as Record<string, unknown>, source.id) : "Source";
+    const targetTitle = target ? displayTitle(target.labels, target.properties as Record<string, unknown>, target.id) : "Target";
+    return { id: edge.id, kind: "relationship" as const, labels: [humanizeRelationship(edge.type)], title: humanizeRelationship(edge.type), snippet: `${sourceTitle} ${humanizeRelationship(edge.type)} ${targetTitle}`, sourceNodeIds: [edge.source, edge.target] };
+  });
   const unique = Array.from(new Map([...((mode === "relationship") ? relationshipResults : nodeResults), ...((mode === "relationship") ? nodeResults : relationshipResults)].map((result) => [`${result.kind}:${result.id}`, result])).values()).slice(0, bounded);
   return { query: clean, scope, mode, results: unique, context, counts: { nodes: context.nodes.length, relationships: context.relationships.length, results: unique.length } };
 }

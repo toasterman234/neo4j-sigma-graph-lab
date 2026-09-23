@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { LabNav } from "@/components/LabNav";
+import { ModelingProposalWorkspace } from "@/components/ModelingProposalWorkspace";
 
 type ModelingWorkspaceProps = { onOpenExplorer: () => void };
 
@@ -23,7 +24,7 @@ export function ModelingWorkspace({ onOpenExplorer }: ModelingWorkspaceProps) {
   const [activeSection, setActiveSection] = useState("overview");
   const [copied, setCopied] = useState("");
   const sections = useMemo(() => [
-    ["overview", "Overview"], ["schema", "Live schema"], ["queries", "Query patterns"], ["handoff", "Agent handoff"],
+    ["overview", "Overview"], ["schema", "Live schema"], ["proposals", "Proposed schema"], ["queries", "Query patterns"], ["handoff", "Agent handoff"],
   ], []);
   async function copy(text: string) {
     await navigator.clipboard?.writeText(text);
@@ -47,6 +48,7 @@ export function ModelingWorkspace({ onOpenExplorer }: ModelingWorkspaceProps) {
         <section className="modeling-panel"><h2>Observed live schema</h2><p className="modeling-note">These are the labels and relationship families found during the live integration work. The graph is larger than the explorer viewport, so use bounded queries and expansion rather than loading everything.</p><div className="schema-columns"><div><h3>Common node labels</h3><div className="token-list">{["Chunk", "DocumentId", "Entity", "SemanticEntity", "Project", "Task", "Decision", "Process", "System", "Service", "Platform"].map((x) => <span key={x}>{x}</span>)}</div></div><div><h3>Relationship types</h3><div className="token-list relationship-tokens">{["CONTAINS", "EVIDENCED_BY", "FOLLOWED_BY", "FROM", "HAS_DECISION", "HAS_OPTION", "HOSTED_ON", "INTEGRATES", "IN_STATE", "RELATED_TO", "SUPPORTED_ON", "USES"].map((x) => <span key={x}>{x}</span>)}</div></div></div></section>
         <section className="modeling-panel"><h2>Source lineage</h2><p>Vault material is primarily represented by <code>Chunk</code> nodes. Inspect <code>metadata_x-amz-bedrock-kb-source-uri</code>, <code>metadata</code>, and <code>text</code> to trace a result back to its source document.</p></section>
       </>}
+      {activeSection === "proposals" && <ModelingProposalWorkspace />}
       {activeSection === "queries" && <section className="modeling-panel"><h2>Safe query patterns</h2><p className="modeling-note">Custom queries must be read-only. Use <code>$limit</code> and return Neo4j nodes and relationships when you want a visual graph.</p>{exampleQueries.map(([name, text]) => <div className="query-example" key={name}><div><strong>{name}</strong><code>{text}</code></div><button onClick={() => copy(text)}>{copied === text ? "Copied" : "Copy"}</button></div>)}</section>}
       {activeSection === "handoff" && <section className="modeling-panel handoff-panel"><h2>Continuation contract</h2><ol><li>Read <code>AGENTS.md</code>, <code>ARCHITECTURE.md</code>, and <code>README.md</code> before changing code.</li><li>Keep Neo4j read-only. Do not run seed, reset, migration, delete, or write Cypher.</li><li>Keep credentials in the ignored <code>.env</code>; never expose them to client bundles.</li><li>Preserve the bounded graph contract: initial loads max at 500 nodes, expansion and search are separately capped.</li><li>Verify with the frontend build, backend tests, live health, and the explorer API checks.</li></ol><button className="modeling-primary" onClick={onOpenExplorer}>Continue in explorer →</button></section>}
     </main>

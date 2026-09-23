@@ -16,6 +16,54 @@ export type SourceSummary = {
   semanticNodeIds: string[];
 };
 
+const TECHNICAL_LABELS = new Set(["Chunk", "DocumentId", "Entity", "SemanticEntity"]);
+
+export function humanizeLabel(value: string): string {
+  return value.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_.-]+/g, " ").replace(/\s+/g, " ").trim().replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+export function humanizeRelationship(value: string): string {
+  return humanizeLabel(value).toLowerCase();
+}
+
+function opaque(value: string): boolean {
+  const compact = value.replace(/[\s-]/g, "");
+  return /^[a-f0-9]{24,}$/i.test(compact) || /^[a-z0-9+/]{28,}={0,2}$/i.test(compact);
+}
+
+function semanticName(value: string): string | undefined {
+  const match = value.match(/(?:^|-)kb-(.+)$/i);
+  const candidate = (match?.[1] || value).replace(/[_-]+/g, " ").trim();
+  return candidate && !opaque(candidate) ? humanizeLabel(candidate) : undefined;
+}
+
+export function humanizeNodeTitle(node: NodePayload): string | undefined {
+  const properties = node.properties || {};
+  for (const key of ["name", "title", "label"]) {
+    const value = text(properties[key]);
+    if (value && !opaque(value)) return value;
+  }
+  const neptuneId = text(properties.neptune_id);
+  if (neptuneId) return semanticName(neptuneId);
+  const meaningfulLabel = node.labels.find((label) => !TECHNICAL_LABELS.has(label));
+  return meaningfulLabel ? humanizeLabel(meaningfulLabel) : undefined;
+}
+
+export function displayLabel(node: NodePayload): string {
+  const label = node.labels[0] || "Node";
+  if (label === "Chunk") return "Document";
+  if (label === "DocumentId") return "Document reference";
+  if (label === "Entity" || label === "SemanticEntity") return "Concept";
+  return humanizeLabel(label);
+}
+
+function humanizeNode(node: NodePayload): NodePayload | undefined {
+  const title = humanizeNodeTitle(node);
+  const technical = node.labels.some((label) => TECHNICAL_LABELS.has(label));
+  if (technical && !title) return undefined;
+  return { ...node, properties: { ...node.properties, _displayTitle: title || displayLabel(node), _displayLabel: displayLabel(node) } };
+}
+
 const SOURCE_URI_KEYS = [
   "metadata_x-amz-bedrock-kb-source-uri",
   "sourceUri",
@@ -62,7 +110,9 @@ function filename(uri: string): string {
 
 function relativePath(uri: string): string {
   const clean = decodeURIComponent(uri.split(/[?#]/, 1)[0]).replace(/\\/g, "/");
-  const marker = clean.search(/(?:^|\/)(?:ingest|documents?|vault|source)\//i);
+  const vaultMarker = clean.search(/(?:^|\/)(?:ben-)?vault\//i);
+  if (vaultMarker >= 0) return clean.slice(vaultMarker + 1).replace(/^ben-vault\//i, "");
+  const marker = clean.search(/(?:^|\/)(?:ingest|documents?|source)\//i);
   return marker >= 0 ? clean.slice(marker + 1) : clean.replace(/^[a-z]+:\/\/[^/]+\/?/i, "");
 }
 
@@ -120,7 +170,8 @@ export function buildDocumentSourceView(payload: GraphPayload): { payload: Graph
     const ordered = [...chunks].sort((a, b) => chunkOrder(a) - chunkOrder(b));
     const originUri = sourceUri(ordered[0]) || key.replace(/^local:/, "");
     const firstTitle = valueFrom(ordered[0], ["title", "name", "filename", "fileName"]);
-    const content = ordered.map((chunk) => text(chunk.properties.text)).filter(Boolean).join("\n\n");
+    const contentParts = ordered.map((chunk) => text(metadataFor(chunk).parentText) || text(chunk.properties.text)).filter((part): part is string => Boolean(part));
+    const content = Array.from(new Set(contentParts)).join("\n\n");
     sources.set(`source:${key}`, {
       key: `source:${key}`,
       title: firstTitle || filename(originUri),
@@ -159,7 +210,8 @@ export function buildDocumentSourceView(payload: GraphPayload): { payload: Graph
       });
       return;
     }
-    nodes.push(node);
+    const humanNode = humanizeNode(node);
+    if (humanNode) nodes.push(humanNode);
   });
 
   const seenEdges = new Set<string>();
