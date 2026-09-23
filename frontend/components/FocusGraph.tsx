@@ -119,10 +119,20 @@ export function FocusGraph({
   useEffect(() => {
     if (!containerRef.current || !center || shown.length === 0) return;
     const graph = new Graph({ type: "directed", multi: false });
+    const haloId = `${focusId}::halo`;
+    // Halo painted first so it sits underneath the center node: reads as a border.
+    graph.addNode(haloId, {
+      label: "",
+      color: "#7c4a03",
+      size: 30,
+      x: 0,
+      y: 0,
+      halo: true,
+    });
     graph.addNode(focusId, {
       label: shortKind(centerKind),
       color: colorFor(centerKind),
-      size: 22,
+      size: 20,
       x: 0,
       y: 0,
     });
@@ -140,6 +150,14 @@ export function FocusGraph({
       if (nb.outward) graph.addEdge(focusId, nb.node.id, attrs);
       else graph.addEdge(nb.node.id, focusId, attrs);
     });
+    const hovered: { node?: string; neighbors?: Set<string> } = {};
+    function setHovered(node?: string) {
+      hovered.node = node;
+      hovered.neighbors = node ? new Set(graph.neighbors(node)) : undefined;
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      renderer.refresh({ skipIndexation: true });
+    }
+    const isHalo = (node: string) => Boolean(graph.getNodeAttribute(node, "halo"));
     sigmaRef.current?.kill();
     const renderer = new Sigma(graph, containerRef.current, {
       renderEdgeLabels: true,
@@ -150,9 +168,34 @@ export function FocusGraph({
       edgeLabelSize: 11,
       minCameraRatio: 0.15,
       maxCameraRatio: 5,
+      nodeReducer: (node, data) => {
+        const res = { ...data };
+        if (isHalo(node)) return res;
+        if (hovered.node && hovered.node !== node && !hovered.neighbors?.has(node)) {
+          res.label = "";
+          res.color = "#232c4a";
+        }
+        return res;
+      },
+      edgeReducer: (edge, data) => {
+        const res = { ...data };
+        const [s, t] = graph.extremities(edge);
+        const hot = hovered.node !== undefined && (s === hovered.node || t === hovered.node);
+        if (hovered.node && !hot) {
+          res.hidden = true;
+        } else if (!hovered.node) {
+          res.label = "";
+        }
+        return res;
+      },
     });
+    renderer.on("enterNode", ({ node }) => {
+      if (!isHalo(node)) setHovered(node);
+    });
+    renderer.on("leaveNode", () => setHovered(undefined));
     renderer.on("clickNode", ({ node }) => {
-      if (node !== focusId) onSelectRef.current(String(node));
+      if (node === focusId || isHalo(node)) return;
+      onSelectRef.current(String(node));
     });
     sigmaRef.current = renderer;
     return () => {
