@@ -29,6 +29,7 @@
  *
  * Usage:
  *   node scripts/ingest-vault-live.cjs [--dry-run] [--no-wipe]
+ *       [--vault-dir <path>] [--projection <name>] [--fid-prefix <prefix>]
  *       [--vault-dir PATH]
  */
 "use strict";
@@ -58,7 +59,7 @@ const opt = (name, def) => {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 };
-// NOTE: the vault dir uses a curly apostrophe (Ben’s Vault, U+2019).
+// NOTE: the default vault dir uses a curly apostrophe (Ben’s Vault, U+2019).
 const VAULT_DIR = opt(
   "--vault-dir",
   path.join(
@@ -70,6 +71,10 @@ const VAULT_DIR = opt(
     "Ben’s Vault"
   )
 );
+// Parametrized so the same script ingests Vault-v2 (or any vault) as its own
+// projection layer: --projection vault-v2 --fid-prefix vault2
+const PROJECTION = opt("--projection", "vault-live");
+const FIDP = opt("--fid-prefix", "vault");
 
 function splitSections(text) {
   // Split markdown into ## sections; preamble becomes its own section.
@@ -241,7 +246,7 @@ async function main() {
 
   for (const f of folders) {
     nodeRows.push({
-      fid: `vault:folder:${f}`,
+      fid: `${FIDP}:folder:${f}`,
       level: "folder",
       kind: "VaultNote",
       title: f,
@@ -256,7 +261,7 @@ async function main() {
 
   let totalWikilinks = 0;
   for (const d of docs) {
-    const docFid = `vault:doc:${d.rel}`;
+    const docFid = `${FIDP}:doc:${d.rel}`;
     nodeRows.push({
       fid: docFid,
       level: "doc",
@@ -269,13 +274,13 @@ async function main() {
       updated: d.mtime,
       size: d.size,
     });
-    addEdge(`vault:folder:${d.folder}`, docFid, "CONTAINS", "vault-live");
+    addEdge(`${FIDP}:folder:${d.folder}`, docFid, "CONTAINS", PROJECTION);
 
     const sections = splitSections(d.text);
     if (sections.length > 1) {
       sections.forEach((s, i) => {
         nodeRows.push({
-          fid: `vault:sec:${d.rel}#${i}`,
+          fid: `${FIDP}:sec:${d.rel}#${i}`,
           level: "section",
           kind: "VaultNote",
           title: `${d.title} — ${s.title}`.slice(0, 200),
@@ -286,7 +291,7 @@ async function main() {
           updated: d.mtime,
           size: d.size,
         });
-        addEdge(docFid, `vault:sec:${d.rel}#${i}`, "CONTAINS", "vault-live");
+        addEdge(docFid, `${FIDP}:sec:${d.rel}#${i}`, "CONTAINS", PROJECTION);
       });
       summary.sections += sections.length;
     }
@@ -296,7 +301,7 @@ async function main() {
       totalWikilinks++;
       const resolved = resolveWikilink(target, d, idx);
       if (resolved) {
-        addEdge(docFid, `vault:doc:${resolved.rel}`, "RELATED_TO", "vault-live");
+        addEdge(docFid, `${FIDP}:doc:${resolved.rel}`, "RELATED_TO", PROJECTION);
       } else {
         summary.unresolvedWikilinks++;
       }
@@ -306,7 +311,7 @@ async function main() {
       summary.supersessionMarkers++;
       const resolved = resolveWikilink(target, d, idx);
       if (resolved) {
-        addEdge(docFid, `vault:doc:${resolved.rel}`, "SUPERSEDED_BY", "vault-live");
+        addEdge(docFid, `${FIDP}:doc:${resolved.rel}`, "SUPERSEDED_BY", PROJECTION);
       } else {
         summary.unresolvedWikilinks++;
       }
@@ -358,9 +363,10 @@ async function main() {
 
   try {
     if (!NO_WIPE) {
-      console.log("wiping previous vault-live projection…");
+      console.log(`wiping previous ${PROJECTION} projection…`);
       await session.run(
-        "MATCH (n:ProjectionNode) WHERE n._projection = 'vault-live' DETACH DELETE n"
+        "MATCH (n:ProjectionNode) WHERE n._projection = $proj DETACH DELETE n",
+        { proj: PROJECTION }
       );
     }
 
@@ -369,11 +375,11 @@ async function main() {
       await session.run(
         `UNWIND $rows AS r MERGE (n:ProjectionNode { _fid: r.fid })
          SET n:VaultNote,
-             n._projection = 'vault-live', n.level = r.level, n.kind = r.kind,
+             n._projection = $proj, n.level = r.level, n.kind = r.kind,
              n.title = r.title, n.text = r.text, n.folder = r.folder,
              n.source_path = r.source_path, n.name = r.name,
              n.updated = r.updated, n.size = r.size`,
-        { rows: nodeRows.slice(i, i + B) }
+        { rows: nodeRows.slice(i, i + B), proj: PROJECTION }
       );
     }
     console.log("vault nodes ingested:", summary.nodes);
