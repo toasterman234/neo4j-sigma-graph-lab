@@ -112,6 +112,9 @@ export function FocusGraph({
   const centerKind = center ? kindOf(center.labels, center.properties.kind) : "Note";
   const centerText = center ? textOf(center.properties) : "";
   const showText = expanded || centerText.length <= 420;
+  const legendKinds = center
+    ? Array.from(new Set([centerKind, ...shown.map((nb) => kindOf(nb.node.labels, nb.node.properties.kind))]))
+    : [];
 
   useEffect(() => {
     if (!containerRef.current || !center || shown.length === 0) return;
@@ -133,9 +136,12 @@ export function FocusGraph({
       x: 0,
       y: 0,
     });
+    const kindById = new Map<string, string>();
+    kindById.set(focusId, kindLabel(centerKind));
     shown.forEach((nb, i) => {
       const a = (i / Math.max(1, shown.length)) * 2 * Math.PI - Math.PI / 2;
       const k = kindOf(nb.node.labels, nb.node.properties.kind);
+      kindById.set(nb.node.id, kindLabel(k));
       graph.addNode(nb.node.id, {
         label: nodeLabel(nb.node.properties),
         color: colorFor(k),
@@ -168,9 +174,14 @@ export function FocusGraph({
       nodeReducer: (node, data) => {
         const res = { ...data };
         if (isHalo(node)) return res;
-        if (hovered.node && hovered.node !== node && !hovered.neighbors?.has(node)) {
-          res.label = "";
-          res.color = "#232c4a";
+        if (hovered.node) {
+          if (node === hovered.node) {
+            const kind = kindById.get(node);
+            if (kind && res.label) res.label = `${res.label} · ${kind}`;
+          } else if (!hovered.neighbors?.has(node)) {
+            res.label = "";
+            res.color = "#232c4a";
+          }
         }
         return res;
       },
@@ -326,6 +337,17 @@ export function FocusGraph({
             overflow: "hidden",
           }}
         />
+      )}
+
+      {!loading && !error && neighbors.length > 0 && legendKinds.length > 0 && (
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", margin: "2px 2px 4px", fontSize: 11.5, color: "#8b94ad" }}>
+          {legendKinds.map((k) => (
+            <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: colorFor(k) }} />
+              {kindLabel(k)}
+            </span>
+          ))}
+        </div>
       )}
 
       {!loading && !error && neighbors.length === 0 && center && (
