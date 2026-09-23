@@ -1,0 +1,37 @@
+# Dependencies and local runtimes
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Build and test output
+.next/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+playwright-report/
+test-results/
+coverage/
+
+# IDE and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local logs and temporary files
+*.log
+.tmp/
+
+# Generated fixture payloads that may contain local data
+data/documents/*.json
+data/documents/*.txt

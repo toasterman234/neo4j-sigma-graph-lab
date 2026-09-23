@@ -1,0 +1,456 @@
+"""Memory integration — powered by neo4j-agent-memory v0.4+.
+
+Supports two backends, selected by the ``MEMORY_BACKEND`` env var:
+- ``nams`` (default) — hosted Neo4j Agent Memory Service via REST.
+- ``bolt`` — self-hosted Neo4j over the bolt protocol.
+
+LLM and embedding providers are configured via two env vars
+(``MEMORY_LLM`` and ``MEMORY_EMBEDDING``) using LiteLLM-style provider
+strings (e.g. ``anthropic/claude-haiku-4-5``, ``openai/gpt-4o-mini``,
+``bedrock/anthropic.claude-3-haiku-20240307-v1:0``, ``vertex_ai/gemini-1.5-flash``,
+``ollama/llama3``, ``sentence-transformers/all-MiniLM-L6-v2``).
+Native adapters are resolved first; everything else routes through LiteLLM.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import uuid
+from pathlib import Path
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+_memory = None  # MemoryIntegration | None
+_client = None  # MemoryClient | None
+_error_category: str | None = None  # "auth" | "rate_limit" | "network" | "config" | "unknown"
+_error_detail: str | None = None  # short human-readable detail
+
+# NAMS only: app session id → server-assigned conversation id. The NAMS
+# service accepts messages solely for conversation ids IT minted at create
+# time — posting to a client-chosen id 404s with "conversation not found"
+# (and neo4j-agent-memory <=0.5.0 posts the client id straight through).
+# Process-local by design: after a backend restart an old session id gets a
+# fresh conversation, so context resets instead of every write failing.
+_nams_conversation_ids: dict[str, str] = {}
+
+
+# Bucketed error messages shown to the user when NAMS init fails. Keys match
+# _error_category values produced by _classify_memory_error().
+_NAMS_ERROR_MESSAGES = {
+    "auth": (
+        "NAMS authentication failed — verify MEMORY_API_KEY at "
+        "https://memory.neo4jlabs.com (key may be invalid or expired)."
+    ),
+    "rate_limit": (
+        "NAMS rate limit hit — the service is throttling requests. "
+        "Wait a few seconds and retry, or contact Neo4j Labs to raise your quota."
+    ),
+    "network": (
+        "NAMS service unreachable — check your network connection and "
+        "https://status.neo4j.com for service health."
+    ),
+    "config": (
+        "NAMS configuration error — verify MEMORY_API_KEY and "
+        "MEMORY_NAMS_ENDPOINT in your .env."
+    ),
+    "unknown": "NAMS initialization failed — see logs for details.",
+}
+
+
+def _classify_memory_error(exc: BaseException) -> tuple[str, str]:
+    """Bucket a memory-backend exception into (category, short_detail).
+
+    Returns one of: auth, rate_limit, network, config, unknown.
+    Inspection is duck-typed so we don't depend on a specific HTTP client.
+    """
+    # First: explicit status codes from httpx/requests-style exceptions.
+    status = getattr(exc, "status_code", None)
+    if status is None:
+        resp = getattr(exc, "response", None)
+        status = getattr(resp, "status_code", None)
+    if status == 401 or status == 403:
+        return "auth", f"HTTP {status}"
+    if status == 429:
+        return "rate_limit", "HTTP 429"
+    if status is not None and 500 <= status < 600:
+        return "network", f"HTTP {status}"
+
+    # Network-level errors: ConnectionError, TimeoutError, OSError, gaierror.
+    if isinstance(exc, (ConnectionError, TimeoutError)):
+        return "network", type(exc).__name__
+    # OSError covers socket.gaierror and friends without importing socket.
+    if isinstance(exc, OSError):
+        return "network", type(exc).__name__
+
+    # Fall back to scanning the message and exception class name.
+    msg = str(exc).lower()
+    name = type(exc).__name__.lower()
+    if "401" in msg or "403" in msg or "unauthorized" in msg or "forbidden" in msg:
+        return "auth", "auth-error"
+    if "429" in msg or "rate limit" in msg or "too many requests" in msg:
+        return "rate_limit", "rate-limit"
+    if (
+        "timeout" in msg
+        or "connection" in msg
+        or "unreachable" in msg
+        or "dns" in msg
+        or "name resolution" in msg
+        or "connecterror" in name
+    ):
+        return "network", type(exc).__name__
+    if "api_key" in msg or "memory_api_key" in msg or "endpoint" in msg:
+        return "config", type(exc).__name__
+    return "unknown", type(exc).__name__
+
+
+def _resolve_llm_model() -> str | None:
+    """Pick a default LLM provider string when MEMORY_LLM is unset."""
+    if settings.memory_llm:
+        return settings.memory_llm
+    if settings.anthropic_api_key:
+        return "anthropic/claude-haiku-4-5"
+    if settings.openai_api_key:
+        return "openai/gpt-4o-mini"
+    return None
+
+
+def _resolve_embedding_model() -> str | None:
+    """Pick a default embedding provider string when MEMORY_EMBEDDING is unset.
+
+    NAMS manages embeddings server-side; we omit the client-side embedder
+    (and skip pulling sentence-transformers/torch) unless the user has
+    explicitly overridden MEMORY_EMBEDDING.
+    """
+    if settings.memory_embedding:
+        return settings.memory_embedding
+    if settings.memory_backend == "nams":
+        return None
+    # Bolt backend: local-by-default — no API key required.
+    return "sentence-transformers/all-MiniLM-L6-v2"
+
+
+def _build_memory_settings():
+    """Construct a ``MemorySettings`` instance for the active backend."""
+    from neo4j_agent_memory import MemorySettings, NamsConfig
+    from pydantic import SecretStr
+
+    llm_model = _resolve_llm_model()
+    embedding_model = _resolve_embedding_model()
+
+    common: dict = {}
+    if llm_model:
+        common["llm"] = llm_model
+    if embedding_model:
+        common["embedding"] = embedding_model
+
+    if settings.memory_backend == "nams":
+        if not settings.memory_api_key:
+            raise RuntimeError(
+                "MEMORY_BACKEND=nams but MEMORY_API_KEY is not set. "
+                "Set the API key in .env or switch MEMORY_BACKEND=bolt."
+            )
+        return MemorySettings(
+            backend="nams",
+            nams=NamsConfig(
+                api_key=SecretStr(settings.memory_api_key),
+                endpoint=settings.memory_nams_endpoint or "https://memory.neo4jlabs.com/v1",
+            ),
+            **common,
+        )
+
+    neo4j_config: dict = {
+        "uri": settings.neo4j_uri,
+        "username": settings.neo4j_username,
+        "password": SecretStr(settings.neo4j_password),
+    }
+    if settings.neo4j_database:
+        neo4j_config["database"] = settings.neo4j_database
+
+    return MemorySettings(
+        neo4j=neo4j_config,
+        **common,
+    )
+
+
+def _load_local_ontology_document() -> dict | None:
+    """Load the scaffold's NAMS ontology document (written at generation time)."""
+    path = Path(__file__).parent / "ontology_document.json"
+    try:
+        return json.loads(path.read_text())
+    except Exception:  # noqa: BLE001 — missing/corrupt file just disables create
+        return None
+
+
+async def _ensure_nams_ontology() -> None:
+    """Bind the NAMS workspace to this app's domain ontology (best-effort).
+
+    NAMS auto-binds every workspace to the generic ``nams-default`` ontology
+    until an explicit one is activated; the service pre-registers an ontology
+    for each bundled domain, and every stored entity is stamped with the
+    active ontology version. Order: already active → no-op; catalog match by
+    domain id → activate its latest version; otherwise create from the
+    scaffold's ``ontology_document.json`` (custom domains) and activate.
+
+    Never raises — memory works against the default ontology, just without
+    domain-shaped extraction.
+    """
+    if settings.memory_backend != "nams" or _client is None:
+        return
+    try:
+        active = await _client.ontology.get_active()
+        active_domain = getattr(
+            getattr(getattr(active, "document", None), "domain", None), "id", None
+        )
+        if active_domain == settings.domain_id:
+            return
+
+        summaries = await _client.ontology.list()
+        match = next(
+            (s for s in summaries if getattr(s, "name", None) == settings.domain_id),
+            None,
+        )
+        if match is not None:
+            full = await _client.ontology.get(ontology_id=match.id)
+            versions = getattr(full, "versions", None) or []
+            if versions:
+                latest = max(versions, key=lambda v: getattr(v, "revision", 0) or 0)
+                await _client.ontology.activate(version_id=latest.id)
+                logger.info(
+                    "Activated NAMS ontology '%s' (was '%s')",
+                    settings.domain_id, active_domain,
+                )
+                return
+
+        doc = _load_local_ontology_document()
+        if doc is not None:
+            created = await _client.ontology.create(
+                name=settings.domain_id, schema=doc
+            )
+            await _client.ontology.activate(version_id=created.id)
+            logger.info(
+                "Created + activated NAMS ontology '%s' (was '%s')",
+                settings.domain_id, active_domain,
+            )
+            return
+        logger.warning(
+            "No NAMS ontology found for domain '%s' — staying on '%s'",
+            settings.domain_id, active_domain,
+        )
+    except Exception as e:  # noqa: BLE001 — ontology is an enhancement, not a gate
+        logger.warning("NAMS ontology activation skipped: %s", e)
+
+
+async def connect_memory() -> None:
+    """Initialize MemoryIntegration. No-ops if the library is unavailable."""
+    global _memory, _client, _error_category, _error_detail
+    _error_category = None
+    _error_detail = None
+    try:
+        from neo4j_agent_memory import MemoryClient, MemoryIntegration, SessionStrategy
+    except ImportError:
+        logger.info("neo4j-agent-memory not installed — memory disabled")
+        _memory = None
+        _client = None
+        _error_category = "config"
+        _error_detail = "neo4j-agent-memory not installed"
+        return
+
+    strategy_map = {
+        "per_conversation": SessionStrategy.PER_CONVERSATION,
+        "per_day": SessionStrategy.PER_DAY,
+        "persistent": SessionStrategy.PERSISTENT,
+    }
+
+    try:
+        ms = _build_memory_settings()
+        _client = MemoryClient(ms)
+        await _client.connect()
+        # Bind the workspace to this app's domain ontology (NAMS only; no-op
+        # on bolt) before any writes so data is stamped with — and extraction
+        # speaks — the domain vocabulary instead of nams-default.
+        await _ensure_nams_ontology()
+        _memory = MemoryIntegration(
+            client=_client,
+            session_strategy=strategy_map.get(
+                settings.session_strategy, SessionStrategy.PER_CONVERSATION
+            ),
+            auto_extract=True,
+            auto_preferences=True,
+        )
+        await _memory.connect()
+        logger.info(
+            "MemoryIntegration connected (backend=%s, strategy=%s, extract=%s, preferences=%s)",
+            settings.memory_backend,
+            settings.session_strategy,
+            True,
+            True,
+        )
+    except Exception as e:
+        category, detail = _classify_memory_error(e)
+        _error_category = category
+        _error_detail = detail
+        # Log the user-facing message AND the raw exception so operators can
+        # debug without trawling the library internals.
+        if settings.memory_backend == "nams":
+            logger.warning(
+                "%s [%s]: %s",
+                _NAMS_ERROR_MESSAGES.get(category, _NAMS_ERROR_MESSAGES["unknown"]),
+                detail,
+                e,
+            )
+        else:
+            logger.warning("MemoryIntegration init failed [%s/%s]: %s", category, detail, e)
+        _memory = None
+        if _client is not None:
+            try:
+                await _client.close()
+            except Exception:
+                pass
+            _client = None
+
+
+async def close_memory() -> None:
+    """Shut down MemoryIntegration gracefully."""
+    global _memory, _client, _error_category, _error_detail
+    _nams_conversation_ids.clear()
+    if _memory is not None:
+        try:
+            await _memory.close()
+        except Exception:
+            pass
+        _memory = None
+    if _client is not None:
+        try:
+            await _client.close()
+        except Exception:
+            pass
+        _client = None
+    _error_category = None
+    _error_detail = None
+
+
+def get_memory():
+    """Get the MemoryIntegration instance (may be None)."""
+    return _memory
+
+
+def get_client():
+    """Get the underlying MemoryClient (may be None). Used by route adapters."""
+    return _client
+
+
+def get_error_category() -> str | None:
+    """Return the last memory init error category, or None on success.
+
+    Values: ``auth`` | ``rate_limit`` | ``network`` | ``config`` | ``unknown``.
+    """
+    return _error_category
+
+
+def get_error_message() -> str | None:
+    """Return the user-facing message for the last memory init error."""
+    if _error_category is None:
+        return None
+    return _NAMS_ERROR_MESSAGES.get(_error_category, _NAMS_ERROR_MESSAGES["unknown"])
+
+
+def get_error_detail() -> str | None:
+    """Return the short technical detail for the last memory init error."""
+    return _error_detail
+
+
+async def _resolve_nams_conversation(session_id: str) -> str:
+    """Return the NAMS conversation id backing ``session_id`` (NAMS only).
+
+    Creates the conversation on first use and caches the server-assigned id —
+    the only id the message endpoints accept. Non-NAMS backends (and any
+    create failure) pass the session id through unchanged.
+    """
+    if settings.memory_backend != "nams" or _client is None:
+        return session_id
+    mapped = _nams_conversation_ids.get(session_id)
+    if mapped:
+        return mapped
+    try:
+        conv = await _client.short_term.create_conversation(session_id=session_id)
+        conv_id = str(getattr(conv, "id", "") or session_id)
+    except Exception as e:
+        logger.warning("NAMS create_conversation failed for %s: %s", session_id, e)
+        return session_id
+    _nams_conversation_ids[session_id] = conv_id
+    return conv_id
+
+
+async def store_message(session_id: str, role: str, content: str) -> dict | None:
+    """Store a message and return extraction results (entities, preferences).
+
+    Catches ``NotSupportedError`` for cases where the active backend (e.g. NAMS)
+    doesn't expose certain extraction sub-features — extracted entities still
+    persist where possible.
+
+    Records failures into the same ``_error_category``/``_error_detail`` state
+    ``connect_memory()`` uses, so ``get_error_category()``/``get_error_message()``
+    reflect live write failures too — not just failures at startup connect time.
+    ``MemoryIntegration`` swallows its own errors into ``{"error": ...}`` return
+    values, so those are treated as failures rather than successes.
+    """
+    global _error_category, _error_detail
+    if _memory is None:
+        return None
+    try:
+        from neo4j_agent_memory import NotSupportedError
+    except ImportError:
+        NotSupportedError = Exception  # type: ignore[assignment, misc]
+    try:
+        target_session = await _resolve_nams_conversation(session_id)
+        result = await _memory.store_message(role, content, session_id=target_session)
+        if isinstance(result, dict) and result.get("error"):
+            _error_category, _error_detail = _classify_memory_error(
+                RuntimeError(str(result["error"]))
+            )
+            logger.warning(
+                "Failed to store message [%s/%s]: %s",
+                _error_category, _error_detail, result["error"],
+            )
+            return None
+        _error_category = None
+        _error_detail = None
+        return result
+    except NotSupportedError as e:
+        logger.info("Partial store on %s backend: %s", settings.memory_backend, e)
+        return None
+    except Exception as e:
+        _error_category, _error_detail = _classify_memory_error(e)
+        logger.warning("Failed to store message [%s/%s]: %s", _error_category, _error_detail, e)
+        return None
+
+
+async def get_context(
+    session_id: str, query: str | None = None, max_items: int = 10
+) -> dict:
+    """Get rich context for a session.
+
+    Returns a dict with keys: messages, entities, preferences, traces.
+    Falls back to empty lists if memory is unavailable.
+    """
+    empty = {"messages": [], "entities": [], "preferences": [], "traces": []}
+    if _memory is None:
+        return empty
+    try:
+        target_session = await _resolve_nams_conversation(session_id)
+        return await _memory.get_context(
+            session_id=target_session, query=query, max_items=max_items
+        )
+    except Exception as e:
+        logger.warning("Failed to get context: %s", e)
+        return empty
+
+
+def resolve_session_id(hint: str | None = None) -> str:
+    """Resolve session ID based on configured strategy."""
+    if _memory is None:
+        return hint or str(uuid.uuid4())
+    return _memory.resolve_session_id(hint=hint)

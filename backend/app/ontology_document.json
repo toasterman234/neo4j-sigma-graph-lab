@@ -1,0 +1,657 @@
+{
+  "domain": {
+    "id": "personal-knowledge",
+    "name": "Personal Knowledge",
+    "description": "Personal note-taking, contact management, project tracking, and knowledge connections",
+    "tagline": "AI-powered Personal Knowledge Graph",
+    "emoji": "\ud83d\udcdd"
+  },
+  "entity_types": [
+    {
+      "label": "Person",
+      "pole_type": "PERSON",
+      "subtype": null,
+      "color": "#22c55e",
+      "icon": "user",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Organization",
+      "pole_type": "ORGANIZATION",
+      "subtype": null,
+      "color": "#3b82f6",
+      "icon": "building",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "industry",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Location",
+      "pole_type": "LOCATION",
+      "subtype": null,
+      "color": "#a855f7",
+      "icon": "map-pin",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "address",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "latitude",
+          "type": "float",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "longitude",
+          "type": "float",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Event",
+      "pole_type": "EVENT",
+      "subtype": null,
+      "color": "#f97316",
+      "icon": "calendar",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "date",
+          "type": "datetime",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Object",
+      "pole_type": "OBJECT",
+      "subtype": null,
+      "color": "#eab308",
+      "icon": "box",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Note",
+      "pole_type": "OBJECT",
+      "subtype": "KNOWLEDGE_NOTE",
+      "color": "#fbbf24",
+      "icon": "sticky-note",
+      "properties": [
+        {
+          "name": "note_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "note_type",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "fleeting",
+            "literature",
+            "permanent",
+            "reference",
+            "meeting"
+          ],
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Contact",
+      "pole_type": "OBJECT",
+      "subtype": "PERSON_CONTACT",
+      "color": "#0891b2",
+      "icon": "user",
+      "properties": [
+        {
+          "name": "contact_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "relationship",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "friend",
+            "colleague",
+            "family",
+            "mentor",
+            "acquaintance",
+            "client"
+          ],
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "organization",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "last_contact",
+          "type": "date",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Project",
+      "pole_type": "OBJECT",
+      "subtype": "PERSONAL_PROJECT",
+      "color": "#8b5cf6",
+      "icon": "folder-kanban",
+      "properties": [
+        {
+          "name": "project_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "planning",
+            "active",
+            "paused",
+            "completed",
+            "archived"
+          ],
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "started_at",
+          "type": "date",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "deadline",
+          "type": "date",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Topic",
+      "pole_type": "OBJECT",
+      "subtype": "KNOWLEDGE_TOPIC",
+      "color": "#10b981",
+      "icon": "hash",
+      "properties": [
+        {
+          "name": "topic_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "technology",
+            "science",
+            "philosophy",
+            "business",
+            "health",
+            "art",
+            "personal"
+          ],
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "Bookmark",
+      "pole_type": "OBJECT",
+      "subtype": "WEB_BOOKMARK",
+      "color": "#d946ef",
+      "icon": "bookmark",
+      "properties": [
+        {
+          "name": "bookmark_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "source",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "saved_at",
+          "type": "datetime",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "read_status",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "unread",
+            "reading",
+            "read",
+            "archived"
+          ],
+          "default": null,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "label": "JournalEntry",
+      "pole_type": "EVENT",
+      "subtype": "JOURNAL",
+      "color": "#ec4899",
+      "icon": "book-open",
+      "properties": [
+        {
+          "name": "entry_id",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "required": true,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "mood",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": [
+            "great",
+            "good",
+            "neutral",
+            "low",
+            "difficult"
+          ],
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        },
+        {
+          "name": "word_count",
+          "type": "integer",
+          "required": false,
+          "unique": false,
+          "enum": null,
+          "default": null,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "WORKS_FOR",
+      "source": "Person",
+      "target": "Organization",
+      "properties": []
+    },
+    {
+      "type": "LOCATED_AT",
+      "source": "Organization",
+      "target": "Location",
+      "properties": []
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source": "Person",
+      "target": "Event",
+      "properties": []
+    },
+    {
+      "type": "KNOWS",
+      "source": "Contact",
+      "target": "Contact",
+      "properties": []
+    },
+    {
+      "type": "TAGGED",
+      "source": "Note",
+      "target": "Topic",
+      "properties": []
+    },
+    {
+      "type": "WORKED_ON",
+      "source": "Contact",
+      "target": "Project",
+      "properties": []
+    },
+    {
+      "type": "REFERENCES",
+      "source": "Note",
+      "target": "Bookmark",
+      "properties": []
+    },
+    {
+      "type": "RELATED_TO",
+      "source": "Topic",
+      "target": "Topic",
+      "properties": []
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source": "Contact",
+      "target": "JournalEntry",
+      "properties": []
+    },
+    {
+      "type": "BELONGS_TO",
+      "source": "Note",
+      "target": "Project",
+      "properties": []
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source": "JournalEntry",
+      "target": "Bookmark",
+      "properties": []
+    }
+  ]
+}

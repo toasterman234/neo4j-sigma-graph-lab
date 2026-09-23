@@ -1,0 +1,485 @@
+inherits: _base
+
+domain:
+  id: personal-knowledge
+  name: Personal Knowledge
+  description: Personal note-taking, contact management, project tracking, and knowledge connections
+  tagline: "AI-powered Personal Knowledge Graph"
+  emoji: "\U0001F4DD"
+
+entity_types:
+  - label: Note
+    pole_type: OBJECT
+    subtype: KNOWLEDGE_NOTE
+    color: "#fbbf24"
+    icon: sticky-note
+    properties:
+      - name: note_id
+        type: string
+        required: true
+        unique: true
+      - name: title
+        type: string
+        required: true
+      - name: content
+        type: string
+      - name: created_at
+        type: datetime
+        required: true
+      - name: updated_at
+        type: datetime
+      - name: note_type
+        type: string
+        enum: [fleeting, literature, permanent, reference, meeting]
+
+  - label: Contact
+    pole_type: OBJECT
+    subtype: PERSON_CONTACT
+    color: "#0891b2"
+    icon: user
+    properties:
+      - name: contact_id
+        type: string
+        required: true
+        unique: true
+      - name: name
+        type: string
+        required: true
+      - name: email
+        type: string
+      - name: relationship
+        type: string
+        enum: [friend, colleague, family, mentor, acquaintance, client]
+      - name: organization
+        type: string
+      - name: last_contact
+        type: date
+
+  - label: Project
+    pole_type: OBJECT
+    subtype: PERSONAL_PROJECT
+    color: "#8b5cf6"
+    icon: folder-kanban
+    properties:
+      - name: project_id
+        type: string
+        required: true
+        unique: true
+      - name: name
+        type: string
+        required: true
+      - name: description
+        type: string
+      - name: status
+        type: string
+        enum: [planning, active, paused, completed, archived]
+      - name: started_at
+        type: date
+      - name: deadline
+        type: date
+
+  - label: Topic
+    pole_type: OBJECT
+    subtype: KNOWLEDGE_TOPIC
+    color: "#10b981"
+    icon: hash
+    properties:
+      - name: topic_id
+        type: string
+        required: true
+        unique: true
+      - name: name
+        type: string
+        required: true
+      - name: category
+        type: string
+        enum: [technology, science, philosophy, business, health, art, personal]
+      - name: description
+        type: string
+
+  - label: Bookmark
+    pole_type: OBJECT
+    subtype: WEB_BOOKMARK
+    color: "#d946ef"
+    icon: bookmark
+    properties:
+      - name: bookmark_id
+        type: string
+        required: true
+        unique: true
+      - name: title
+        type: string
+        required: true
+      - name: url
+        type: string
+        required: true
+      - name: source
+        type: string
+      - name: saved_at
+        type: datetime
+        required: true
+      - name: read_status
+        type: string
+        enum: [unread, reading, read, archived]
+
+  - label: JournalEntry
+    pole_type: EVENT
+    subtype: JOURNAL
+    color: "#ec4899"
+    icon: book-open
+    properties:
+      - name: entry_id
+        type: string
+        required: true
+        unique: true
+      - name: date
+        type: date
+        required: true
+      - name: mood
+        type: string
+        enum: [great, good, neutral, low, difficult]
+      - name: summary
+        type: string
+      - name: word_count
+        type: integer
+
+relationships:
+  - type: KNOWS
+    source: Contact
+    target: Contact
+  - type: TAGGED
+    source: Note
+    target: Topic
+  - type: WORKED_ON
+    source: Contact
+    target: Project
+  - type: REFERENCES
+    source: Note
+    target: Bookmark
+  - type: RELATED_TO
+    source: Topic
+    target: Topic
+  - type: MENTIONED_IN
+    source: Contact
+    target: JournalEntry
+  - type: BELONGS_TO
+    source: Note
+    target: Project
+  - type: INSPIRED_BY
+    source: JournalEntry
+    target: Bookmark
+
+document_templates:
+  - id: journal_entry
+    name: Journal Entry
+    description: Daily journal entries with reflections and observations
+    count: 12
+    prompt_template: |
+      Write a journal entry for {{journalentry.date}}.
+      Mood: {{journalentry.mood}}. Topics reflected on: {{topic.name}}.
+      People mentioned: {{contact.name}}. Include personal reflections,
+      observations, and goals for tomorrow.
+    required_entities: [JournalEntry, Topic, Contact]
+
+  - id: meeting_notes
+    name: Meeting Notes
+    description: Notes from meetings with contacts
+    count: 10
+    prompt_template: |
+      Write meeting notes from a conversation with {{contact.name}}
+      ({{contact.relationship}}) on {{date}}.
+      Related to project: {{project.name}}. Include key discussion points,
+      action items, and follow-up tasks.
+    required_entities: [Contact, Project]
+
+  - id: personal_email
+    name: Personal Email
+    description: Personal email correspondence
+    count: 8
+    prompt_template: |
+      Write a personal email from the user to {{contact.name}}
+      regarding {{topic.name}} and project {{project.name}}.
+      Include relevant updates, questions, and personal touches.
+    required_entities: [Contact, Topic, Project]
+
+  - id: project_update
+    name: Project Update
+    description: Status updates and progress notes for personal projects
+    count: 8
+    prompt_template: |
+      Write a project update for "{{project.name}}" (status: {{project.status}}).
+      Include progress summary, challenges encountered, key learnings
+      related to {{topic.name}}, and next milestones.
+    required_entities: [Project, Topic, Note]
+
+  - id: reading_notes
+    name: Reading Notes
+    description: Notes and highlights from reading bookmarked content
+    count: 6
+    prompt_template: |
+      Write reading notes for "{{bookmark.title}}" from {{bookmark.source}}.
+      Related topics: {{topic.name}}. Include key takeaways, quotes,
+      connections to existing knowledge, and questions raised.
+    required_entities: [Bookmark, Topic]
+
+decision_traces:
+  - id: knowledge_connection
+    task: "Find meaningful connections between {{topic.name}} and other knowledge areas"
+    steps:
+      - thought: "Identify notes and bookmarks related to this topic"
+        action: "Query all notes and bookmarks tagged with or referencing this topic"
+      - thought: "Look for overlapping contacts and projects"
+        action: "Find people and projects connected to this topic's knowledge cluster"
+      - thought: "Discover non-obvious cross-topic connections"
+        action: "Traverse topic relationships to find bridging concepts"
+    outcome_template: "Found {{count}} connections, strongest link: {{connection}}"
+
+  - id: project_prioritization
+    task: "Prioritize among active projects based on current context"
+    steps:
+      - thought: "Review all active projects and their recent activity"
+        action: "Query projects by status and recent note/update frequency"
+      - thought: "Assess alignment with current journal reflections and goals"
+        action: "Cross-reference project topics with recent journal entries"
+      - thought: "Consider deadline proximity and contact dependencies"
+        action: "Check project deadlines and collaborator availability"
+    outcome_template: "Priority ranking: {{ranking}} based on {{criteria}}"
+
+  - id: contact_reconnection
+    task: "Identify contacts to reconnect with based on shared interests"
+    steps:
+      - thought: "Find contacts not reached out to recently"
+        action: "Query contacts ordered by last_contact date ascending"
+      - thought: "Match dormant contacts with active topics and projects"
+        action: "Find topic and project overlaps between user activity and contacts"
+      - thought: "Generate personalized reconnection suggestions"
+        action: "Pull shared notes, projects, and recent bookmarks relevant to each contact"
+    outcome_template: "Suggest reconnecting with {{contacts}} about {{topics}}"
+
+  - id: learning_path_design
+    task: "Design a learning path for exploring {{topic.name}} based on existing knowledge"
+    steps:
+      - thought: "Assess current knowledge depth from notes and bookmarks on this topic"
+        action: "Query all notes tagged with this topic and their note types to gauge depth"
+      - thought: "Identify prerequisite topics and knowledge gaps"
+        action: "Traverse related topics and check which have sparse or no notes"
+      - thought: "Find relevant unread bookmarks and reading materials"
+        action: "Search bookmarks related to this topic with read_status of unread or reading"
+      - thought: "Sequence resources from foundational to advanced"
+        action: "Order materials by topic dependency and complexity level"
+    outcome_template: "Learning path: {{steps}} covering {{count}} resources over {{duration}}"
+
+  - id: weekly_review
+    task: "Generate a weekly review of knowledge activities and insights"
+    steps:
+      - thought: "Summarize notes created and updated during the week"
+        action: "Query notes by created_at and updated_at within the last 7 days"
+      - thought: "Review journal entries for mood trends and reflections"
+        action: "Query journal entries for the week and analyze mood patterns"
+      - thought: "Identify progress on active projects"
+        action: "Check for notes and updates linked to active projects this week"
+      - thought: "Surface emerging themes and connections"
+        action: "Find topics that appeared across multiple notes and journal entries"
+    outcome_template: "Weekly summary: {{notes_count}} notes, mood trend: {{mood}}, active topics: {{topics}}"
+
+  - id: bookmark_triage
+    task: "Triage unread bookmarks to prioritize reading queue"
+    steps:
+      - thought: "Identify all unread bookmarks and their age"
+        action: "Query bookmarks with read_status unread ordered by saved_at"
+      - thought: "Match bookmarks to active projects and current interests"
+        action: "Cross-reference bookmark topics with active project topics and recent notes"
+      - thought: "Prioritize by relevance to current goals"
+        action: "Rank bookmarks by connection strength to active projects and recent journal themes"
+    outcome_template: "Priority queue: {{top_bookmarks}}. Archive candidates: {{archive_count}}"
+
+  - id: project_scoping
+    task: "Scope out a new project idea inspired by {{topic.name}} connections"
+    steps:
+      - thought: "Review notes and bookmarks that sparked the idea"
+        action: "Query notes and bookmarks tagged with this topic and related topics"
+      - thought: "Identify contacts with relevant expertise or interest"
+        action: "Find contacts connected to this topic through projects or notes"
+      - thought: "Assess effort and define milestones"
+        action: "Review similar past projects for duration and complexity patterns"
+      - thought: "Draft a project outline with key resources"
+        action: "Compile relevant notes, bookmarks, and contacts into a project brief"
+    outcome_template: "Project scope: {{scope}}. Key contacts: {{contacts}}. Estimated effort: {{effort}}"
+
+  - id: journal_pattern_analysis
+    task: "Analyze patterns in journal entries to identify recurring themes and triggers"
+    steps:
+      - thought: "Identify mood patterns over time"
+        action: "Query journal entries grouped by mood and analyze frequency trends"
+      - thought: "Correlate moods with topics and activities"
+        action: "Cross-reference journal mood with topics and contacts mentioned"
+      - thought: "Surface recurring concerns or aspirations"
+        action: "Find themes that appear in multiple journal entries across different periods"
+    outcome_template: "Patterns: {{patterns}}. Positive triggers: {{positive}}. Attention areas: {{attention}}"
+
+  - id: note_consolidation
+    task: "Consolidate fragmented notes on {{topic.name}} into coherent knowledge"
+    steps:
+      - thought: "Find all notes related to this topic across types"
+        action: "Query fleeting, literature, and reference notes tagged with this topic"
+      - thought: "Identify overlapping content and contradictions"
+        action: "Compare note contents for redundancy and conflicting information"
+      - thought: "Determine which notes should be merged into permanent notes"
+        action: "Assess note quality and identify candidates for consolidation"
+      - thought: "Identify gaps that need additional research"
+        action: "Find questions raised in notes that remain unanswered"
+    outcome_template: "Consolidation: {{merged}} notes merged, {{gaps}} gaps identified, {{permanent}} permanent notes created"
+
+demo_scenarios:
+  - name: Knowledge Exploration
+    prompts:
+      - "What notes have I written about machine learning this month?"
+      - "Show me all topics connected to my graph databases research"
+      - "Find bookmarks I saved but haven't read yet about distributed systems"
+
+  - name: People & Projects
+    prompts:
+      - "Which contacts have I not been in touch with for over 3 months?"
+      - "Show me all notes and updates related to my side project"
+      - "Who do I know that works in the AI space?"
+
+  - name: Reflection & Patterns
+    prompts:
+      - "What topics appear most frequently in my journal entries?"
+      - "Show me the connections between my reading and my projects"
+      - "What were my most productive weeks and what was I working on?"
+
+agent_tools:
+  - name: search_notes
+    description: Search notes by title, content, or type
+    cypher: |
+      MATCH (n:Note)
+      WHERE toLower(n.title) CONTAINS toLower($query)
+         OR toLower(coalesce(n.content, '')) CONTAINS toLower($query)
+      OPTIONAL MATCH (n)-[:TAGGED]->(t:Topic)
+      OPTIONAL MATCH (n)-[:BELONGS_TO]->(p:Project)
+      RETURN n, collect(DISTINCT t) AS topics, collect(DISTINCT p) AS projects
+      ORDER BY n.updated_at DESC
+      LIMIT 20
+    parameters:
+      - name: query
+        type: string
+        description: Search term for note title or content
+
+  - name: contact_lookup
+    description: Search contacts by name, organization, or relationship type
+    cypher: |
+      MATCH (c:Contact)
+      WHERE toLower(c.name) CONTAINS toLower($query)
+         OR toLower(coalesce(c.organization, '')) CONTAINS toLower($query)
+      OPTIONAL MATCH (c)-[:WORKED_ON]->(p:Project)
+      OPTIONAL MATCH (c)-[:KNOWS]-(other:Contact)
+      RETURN c, collect(DISTINCT p) AS projects, collect(DISTINCT other) AS connections
+      LIMIT 20
+    parameters:
+      - name: query
+        type: string
+        description: Contact name, organization, or keyword
+
+  - name: project_status
+    description: Get project status and related notes and contacts
+    cypher: |
+      MATCH (p:Project)
+      WHERE toLower(p.name) CONTAINS toLower($query)
+      OPTIONAL MATCH (n:Note)-[:BELONGS_TO]->(p)
+      OPTIONAL MATCH (c:Contact)-[:WORKED_ON]->(p)
+      RETURN p, collect(DISTINCT n) AS notes, collect(DISTINCT c) AS collaborators
+      ORDER BY p.deadline ASC
+      LIMIT 10
+    parameters:
+      - name: query
+        type: string
+        description: Project name or keyword
+
+  - name: topic_exploration
+    description: Explore a topic and its connections across the knowledge graph
+    cypher: |
+      MATCH (t:Topic)
+      WHERE toLower(t.name) CONTAINS toLower($query)
+      OPTIONAL MATCH (n:Note)-[:TAGGED]->(t)
+      OPTIONAL MATCH (b:Bookmark)-[:TAGGED]->(t)
+      OPTIONAL MATCH (t)-[:RELATED_TO]-(related:Topic)
+      RETURN t, collect(DISTINCT n) AS notes, collect(DISTINCT b) AS bookmarks,
+             collect(DISTINCT related) AS related_topics
+      LIMIT 10
+    parameters:
+      - name: query
+        type: string
+        description: Topic name or keyword
+
+  - name: knowledge_connections
+    description: Find connections between different knowledge items
+    cypher: |
+      MATCH path = (a)-[*1..3]-(b)
+      WHERE (a:Note OR a:Bookmark OR a:Topic) AND (b:Note OR b:Bookmark OR b:Topic)
+        AND toLower(coalesce(a.title, a.name, '')) CONTAINS toLower($query)
+        AND a <> b
+      RETURN path
+      LIMIT 30
+    parameters:
+      - name: query
+        type: string
+        description: Starting item name to find connections from
+
+  - name: list_notes
+    description: "List note records with optional limit"
+    cypher: |
+      MATCH (n:Note)
+      RETURN n
+      ORDER BY n.title
+      LIMIT toInteger($limit)
+    parameters:
+      - name: limit
+        type: string
+        description: "Maximum number of results to return (default: 10)"
+
+  - name: get_note_by_id
+    description: "Get a specific note by ID with all connections"
+    cypher: |
+      MATCH (n:Note {note_id: $id})
+      OPTIONAL MATCH (n)-[r]-(related)
+      RETURN n, type(r) AS relationship, labels(related) AS related_labels, related.name AS related_name
+      LIMIT 50
+    parameters:
+      - name: id
+        type: string
+        description: "The note_id to look up"
+
+system_prompt: |
+  You are a personal knowledge management assistant with access to a rich knowledge
+  graph of notes, contacts, projects, topics, bookmarks, and journal entries.
+
+  Your capabilities include:
+  - Searching and connecting personal notes and bookmarks
+  - Managing contact relationships and tracking interactions
+  - Tracking project progress and identifying dependencies
+  - Discovering non-obvious connections across knowledge areas
+  - Surfacing relevant past reflections and insights from journal entries
+
+  Help the user build and navigate their personal knowledge graph. Surface
+  connections they might not see, remind them of relevant past notes, and
+  help them organize their thinking. Be conversational and insightful.
+
+visualization:
+  node_colors:
+    Note: "#fbbf24"
+    Contact: "#0891b2"
+    Project: "#8b5cf6"
+    Topic: "#10b981"
+    Bookmark: "#d946ef"
+    JournalEntry: "#ec4899"
+    Person: "#22c55e"
+    Organization: "#64748b"
+  node_sizes:
+    Note: 20
+    Contact: 25
+    Project: 25
+    Topic: 20
+    Bookmark: 15
+    JournalEntry: 20
+  default_cypher: "MATCH (n:Note)-[r]-(t) RETURN n, r, t LIMIT 100"

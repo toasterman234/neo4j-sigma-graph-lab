@@ -1,0 +1,157 @@
+"""Personal Knowledge Context Graph — FastAPI Application."""
+
+import logging
+import os
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.context_graph_client import connect_neo4j, close_neo4j, is_connected
+from app.memory import (
+    close_memory,
+    connect_memory,
+    get_client,
+    get_error_category,
+    get_error_detail,
+    get_error_message,
+)
+from app.routes import router
+
+logger = logging.getLogger(__name__)
+
+# Backend connection state
+_neo4j_available = False
+_memory_available = False
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle.
+
+    On the NAMS backend, we only initialize the memory client — there is no
+    bolt Neo4j to connect to. On the self-hosted bolt backend, we connect to
+    Neo4j (which in turn initializes the memory integration).
+    """
+    global _neo4j_available, _memory_available
+
+    if settings.memory_backend == "nams":
+        try:
+            await connect_memory()
+            _memory_available = get_client() is not None
+            if _memory_available:
+                logger.info("NAMS memory client connected")
+            else:
+                # connect_memory() already logged the classified error.
+                # Re-state it here so the startup banner is self-contained.
+                msg = get_error_message() or "NAMS memory client unavailable"
+                logger.warning("Starting in degraded mode: %s", msg)
+        except Exception as e:
+            _memory_available = False
+            logger.warning("NAMS unavailable — starting in degraded mode: %s", e)
+    else:
+        try:
+            await connect_neo4j()
+            _neo4j_available = True
+            # connect_neo4j() calls connect_memory() internally, which catches
+            # its own exceptions — check the client rather than assuming success.
+            _memory_available = get_client() is not None
+            if _memory_available:
+                logger.info("Neo4j connected successfully")
+            else:
+                detail = get_error_detail() or "memory integration unavailable"
+                logger.warning("Neo4j connected but memory is degraded: %s", detail)
+        except Exception as e:
+            _neo4j_available = False
+            _memory_available = False
+            logger.warning("Neo4j unavailable — starting in degraded mode: %s", e)
+
+        if _neo4j_available:
+            try:
+                from app.vector_client import create_vector_index
+                await create_vector_index()
+            except Exception as e:
+                logger.warning("Vector index creation failed (non-fatal): %s", e)
+
+    yield
+
+    if settings.memory_backend == "nams":
+        if _memory_available:
+            await close_memory()
+    else:
+        if _neo4j_available:
+            await close_neo4j()
+
+
+def get_neo4j_status() -> bool:
+    """Check if Neo4j is available (bolt backend only)."""
+    return _neo4j_available
+
+
+def get_memory_status() -> bool:
+    """Check if the memory backend is available."""
+    return _memory_available
+
+app = FastAPI(
+    title="Personal Knowledge Context Graph",
+    description="Personal note-taking, contact management, project tracking, and knowledge connections",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    f"http://localhost:{settings.frontend_port}",
+).split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router, prefix="/api")
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint with memory backend connectivity status."""
+    if settings.memory_backend == "nams":
+        memory_ok = get_memory_status()
+        body = {
+            "status": "ok" if memory_ok else "degraded",
+            "memory_backend": "nams",
+            "nams": memory_ok,
+            "domain": "personal-knowledge",
+            "version": "0.1.0",
+        }
+        if not memory_ok:
+            category = get_error_category()
+            if category:
+                body["nams_error"] = category
+                body["nams_error_message"] = get_error_message()
+                body["nams_error_detail"] = get_error_detail()
+            body["nams_dashboard"] = "https://memory.neo4jlabs.com"
+        return body
+    neo4j_ok = is_connected()
+    # get_error_category() reflects the LATEST failure, including ones
+    # recorded by store_message() after a successful startup connect —
+    # get_memory_status() alone is a stale startup-time snapshot.
+    category = get_error_category()
+    memory_ok = get_memory_status() and category is None
+    body = {
+        "status": "ok" if (neo4j_ok and memory_ok) else "degraded",
+        "memory_backend": "bolt",
+        "neo4j": neo4j_ok,
+        "memory": memory_ok,
+        "domain": "personal-knowledge",
+        "version": "0.1.0",
+    }
+    if neo4j_ok and category:
+        body["memory_error"] = category
+        body["memory_error_detail"] = get_error_detail()
+    return body

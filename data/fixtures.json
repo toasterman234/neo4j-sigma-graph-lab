@@ -1,0 +1,1317 @@
+{
+  "domain": "personal-knowledge",
+  "entities": {
+    "Person": [
+      {
+        "name": "Sarah Chen",
+        "email": "sarah.chen@company.org",
+        "role": "Senior Analyst",
+        "description": "Sarah Chen, senior analyst specializing in personal knowledge."
+      },
+      {
+        "name": "James Morrison",
+        "email": "james.morrison@company.org",
+        "role": "Project Manager",
+        "description": "Project Manager James Morrison \u2014 active in the personal knowledge sector with relevant domain expertise."
+      },
+      {
+        "name": "Maria Rodriguez",
+        "email": "maria.rodriguez@company.org",
+        "role": "Technical Lead",
+        "description": "Maria Rodriguez serves as technical lead, contributing to personal knowledge initiatives and operations."
+      },
+      {
+        "name": "David Park",
+        "email": "david.park@company.org",
+        "role": "Research Director",
+        "description": "David Park, research director specializing in personal knowledge."
+      },
+      {
+        "name": "Elena Volkov",
+        "email": "elena.volkov@corp.net",
+        "role": "Operations Manager",
+        "description": "Operations Manager Elena Volkov \u2014 active in the personal knowledge sector with relevant domain expertise."
+      }
+    ],
+    "Organization": [
+      {
+        "name": "Meridian Consulting Group",
+        "description": "Meridian Consulting Group is a knowledge management organization operating in the personal knowledge space.",
+        "industry": "Knowledge Management"
+      },
+      {
+        "name": "Pacific Northwest Industries",
+        "description": "Personal Productivity entity Pacific Northwest Industries, providing services and resources for personal knowledge operations.",
+        "industry": "Personal Productivity"
+      },
+      {
+        "name": "Apex Financial Partners",
+        "description": "Apex Financial Partners \u2014 a edtech institution active in personal knowledge.",
+        "industry": "EdTech"
+      },
+      {
+        "name": "Greenleaf Technologies",
+        "description": "Greenleaf Technologies is a information services organization operating in the personal knowledge space.",
+        "industry": "Information Services"
+      },
+      {
+        "name": "Summit Healthcare Systems",
+        "description": "Content Organization entity Summit Healthcare Systems, providing services and resources for personal knowledge operations.",
+        "industry": "Content Organization"
+      }
+    ],
+    "Location": [
+      {
+        "name": "Downtown Medical Center",
+        "address": "147 Birch Road, Denver, CO 80202",
+        "latitude": 33.55,
+        "longitude": -115.99
+      },
+      {
+        "name": "Westside Corporate Campus",
+        "address": "147 Birch Road, New York, NY 10001",
+        "latitude": 25.98,
+        "longitude": -115.79
+      },
+      {
+        "name": "Harbor View Complex",
+        "address": "654 Cedar Lane, Boston, MA 02101",
+        "latitude": 32.93,
+        "longitude": -83.42
+      },
+      {
+        "name": "Mountain Ridge Facility",
+        "address": "654 Cedar Lane, Chicago, IL 60601",
+        "latitude": 47.0,
+        "longitude": -116.67
+      },
+      {
+        "name": "Riverside Research Park",
+        "address": "147 Birch Road, Austin, TX 78701",
+        "latitude": 26.97,
+        "longitude": -118.41
+      }
+    ],
+    "Event": [
+      {
+        "name": "Q4 Strategy Review",
+        "date": "2024-10-27T14:30:00",
+        "description": "Q4 Strategy Review, a event event recorded in the personal knowledge timeline."
+      },
+      {
+        "name": "Annual Compliance Audit",
+        "date": "2025-05-26T12:00:00",
+        "description": "Event Annual Compliance Audit \u2014 occurred as part of personal knowledge activities."
+      },
+      {
+        "name": "Emergency Response Drill",
+        "date": "2026-08-15T10:45:00",
+        "description": "Recorded event: Emergency Response Drill, relevant to personal knowledge workflows."
+      },
+      {
+        "name": "Product Launch Summit",
+        "date": "2024-04-19T17:15:00",
+        "description": "Product Launch Summit, a event event recorded in the personal knowledge timeline."
+      },
+      {
+        "name": "Board of Directors Meeting",
+        "date": "2025-12-05T10:45:00",
+        "description": "Event Board of Directors Meeting \u2014 occurred as part of personal knowledge activities."
+      }
+    ],
+    "Object": [
+      {
+        "name": "Primary Analysis Report",
+        "description": "Primary Analysis Report, a object used in personal knowledge workflows."
+      },
+      {
+        "name": "Standard Operating Procedure",
+        "description": "Object Standard Operating Procedure \u2014 cataloged for personal knowledge operations."
+      },
+      {
+        "name": "Quarterly Assessment Document",
+        "description": "Quarterly Assessment Document is a object supporting personal knowledge processes."
+      },
+      {
+        "name": "Technical Specification",
+        "description": "Technical Specification, a object used in personal knowledge workflows."
+      },
+      {
+        "name": "Compliance Certificate",
+        "description": "Object Compliance Certificate \u2014 cataloged for personal knowledge operations."
+      }
+    ],
+    "Note": [
+      {
+        "name": "API Design Best Practices",
+        "note_id": "NOT-2026-0000",
+        "title": "Senior Analyst",
+        "content": "API Design Best Practices - Content",
+        "created_at": "2025-01-21T13:30:00",
+        "updated_at": "2026-04-26T17:45:00",
+        "note_type": "fleeting"
+      },
+      {
+        "name": "Conference Talk Ideas",
+        "note_id": "NOT-2026-0001",
+        "title": "Project Manager",
+        "content": "Conference Talk Ideas - Content",
+        "created_at": "2024-04-26T14:15:00",
+        "updated_at": "2025-06-30T08:15:00",
+        "note_type": "literature"
+      },
+      {
+        "name": "Recipe: Homemade Ramen",
+        "note_id": "NOT-2025-0002",
+        "title": "Technical Lead",
+        "content": "Recipe: Homemade Ramen - Content",
+        "created_at": "2026-01-10T14:45:00",
+        "updated_at": "2026-11-30T10:30:00",
+        "note_type": "permanent"
+      },
+      {
+        "name": "Workout Routine Week 12",
+        "note_id": "NOT-2026-0003",
+        "title": "Research Director",
+        "content": "Workout Routine Week 12 - Content",
+        "created_at": "2026-11-30T11:00:00",
+        "updated_at": "2025-07-29T17:00:00",
+        "note_type": "reference"
+      },
+      {
+        "name": "Investment Research Notes",
+        "note_id": "NOT-2025-0004",
+        "title": "Operations Manager",
+        "content": "Investment Research Notes - Content",
+        "created_at": "2025-11-22T17:30:00",
+        "updated_at": "2025-12-18T14:15:00",
+        "note_type": "meeting"
+      }
+    ],
+    "Contact": [
+      {
+        "name": "Dr. Sarah Mitchell (Mentor)",
+        "contact_id": "CON-2026-0000",
+        "email": "dr..(mentor)@corp.net",
+        "relationship": "friend",
+        "organization": "Dr. Sarah Mitchell (Mentor) - Organization",
+        "last_contact": "2025-10-15"
+      },
+      {
+        "name": "Alex Rivera (Collaborator)",
+        "contact_id": "CON-2024-0001",
+        "email": "alex.(collaborator)@corp.net",
+        "relationship": "colleague",
+        "organization": "Alex Rivera (Collaborator) - Organization",
+        "last_contact": "2026-11-28"
+      },
+      {
+        "name": "Prof. James Wu (Advisor)",
+        "contact_id": "CON-2024-0002",
+        "email": "prof..(advisor)@acme.co",
+        "relationship": "family",
+        "organization": "Prof. James Wu (Advisor) - Organization",
+        "last_contact": "2025-09-11"
+      },
+      {
+        "name": "Lisa Park (Editor)",
+        "contact_id": "CON-2026-0003",
+        "email": "lisa.(editor)@acme.co",
+        "relationship": "mentor",
+        "organization": "Lisa Park (Editor) - Organization",
+        "last_contact": "2026-06-10"
+      },
+      {
+        "name": "David Okafor (CTO)",
+        "contact_id": "CON-2025-0004",
+        "email": "david.(cto)@company.org",
+        "relationship": "acquaintance",
+        "organization": "David Okafor (CTO) - Organization",
+        "last_contact": "2026-10-06"
+      }
+    ],
+    "Project": [
+      {
+        "name": "Personal Knowledge Graph",
+        "project_id": "PRO-2026-0000",
+        "description": "Personal Knowledge Graph, a project used in personal knowledge workflows.",
+        "status": "planning",
+        "started_at": "2024-12-15",
+        "deadline": "2025-07-05"
+      },
+      {
+        "name": "Open Source CLI Tool",
+        "project_id": "PRO-2024-0001",
+        "description": "Project Open Source CLI Tool \u2014 cataloged for personal knowledge operations.",
+        "status": "active",
+        "started_at": "2024-01-06",
+        "deadline": "2024-07-16"
+      },
+      {
+        "name": "Home Automation Dashboard",
+        "project_id": "PRO-2026-0002",
+        "description": "Home Automation Dashboard is a project supporting personal knowledge processes.",
+        "status": "paused",
+        "started_at": "2024-04-24",
+        "deadline": "2025-01-29"
+      },
+      {
+        "name": "Photography Portfolio",
+        "project_id": "PRO-2025-0003",
+        "description": "Photography Portfolio, a project used in personal knowledge workflows.",
+        "status": "completed",
+        "started_at": "2025-09-22",
+        "deadline": "2026-11-04"
+      },
+      {
+        "name": "Language Learning App",
+        "project_id": "PRO-2026-0004",
+        "description": "Project Language Learning App \u2014 cataloged for personal knowledge operations.",
+        "status": "archived",
+        "started_at": "2024-04-18",
+        "deadline": "2026-04-25"
+      }
+    ],
+    "Topic": [
+      {
+        "name": "Machine Learning Fundamentals",
+        "topic_id": "TOP-2024-0000",
+        "category": "technology",
+        "description": "Machine Learning Fundamentals, a topic used in personal knowledge workflows."
+      },
+      {
+        "name": "Graph Database Design",
+        "topic_id": "TOP-2026-0001",
+        "category": "science",
+        "description": "Topic Graph Database Design \u2014 cataloged for personal knowledge operations."
+      },
+      {
+        "name": "Personal Finance Strategy",
+        "topic_id": "TOP-2026-0002",
+        "category": "philosophy",
+        "description": "Personal Finance Strategy is a topic supporting personal knowledge processes."
+      },
+      {
+        "name": "Creative Writing Techniques",
+        "topic_id": "TOP-2024-0003",
+        "category": "business",
+        "description": "Creative Writing Techniques, a topic used in personal knowledge workflows."
+      },
+      {
+        "name": "Home Automation Setup",
+        "topic_id": "TOP-2026-0004",
+        "category": "health",
+        "description": "Topic Home Automation Setup \u2014 cataloged for personal knowledge operations."
+      }
+    ],
+    "Bookmark": [
+      {
+        "name": "Hacker News: Distributed Systems",
+        "bookmark_id": "BOO-2026-0000",
+        "title": "Senior Analyst",
+        "url": "https://www.hacker-news:-distributed-systems.example.com",
+        "source": "Hacker News: Distributed Systems - Source",
+        "saved_at": "2024-06-19T13:45:00",
+        "read_status": "unread"
+      },
+      {
+        "name": "ArXiv: Attention Is All You Need",
+        "bookmark_id": "BOO-2026-0001",
+        "title": "Project Manager",
+        "url": "https://www.arxiv:-attention-is-all-you-need.example.com",
+        "source": "ArXiv: Attention Is All You Need - Source",
+        "saved_at": "2025-01-16T16:45:00",
+        "read_status": "reading"
+      },
+      {
+        "name": "MDN Web Docs: Fetch API",
+        "bookmark_id": "BOO-2025-0002",
+        "title": "Technical Lead",
+        "url": "https://www.mdn-web-docs:-fetch-api.example.com",
+        "source": "MDN Web Docs: Fetch API - Source",
+        "saved_at": "2024-09-21T10:15:00",
+        "read_status": "read"
+      },
+      {
+        "name": "Neo4j Graph Academy",
+        "bookmark_id": "BOO-2025-0003",
+        "title": "Research Director",
+        "url": "https://www.neo4j-graph-academy.example.com",
+        "source": "Neo4j Graph Academy - Source",
+        "saved_at": "2024-11-07T14:00:00",
+        "read_status": "archived"
+      },
+      {
+        "name": "Rust Book Chapter 10",
+        "bookmark_id": "BOO-2024-0004",
+        "title": "Operations Manager",
+        "url": "https://www.rust-book-chapter-10.example.com",
+        "source": "Rust Book Chapter 10 - Source",
+        "saved_at": "2025-04-11T13:15:00",
+        "read_status": "unread"
+      }
+    ],
+    "JournalEntry": [
+      {
+        "name": "Reflections on Q1 Goals",
+        "entry_id": "JOU-2026-0000",
+        "date": "2025-07-14",
+        "mood": "great",
+        "summary": "Reflections on Q1 Goals, a journalentry used in personal knowledge workflows.",
+        "word_count": 68
+      },
+      {
+        "name": "Book Notes: Thinking Fast and Slow",
+        "entry_id": "JOU-2024-0001",
+        "date": "2024-01-02",
+        "mood": "good",
+        "summary": "JournalEntry Book Notes: Thinking Fast and Slow \u2014 cataloged for personal knowledge operations.",
+        "word_count": 92
+      },
+      {
+        "name": "Meeting Takeaways Board Review",
+        "entry_id": "JOU-2026-0002",
+        "date": "2025-08-07",
+        "mood": "neutral",
+        "summary": "Meeting Takeaways Board Review is a journalentry supporting personal knowledge processes.",
+        "word_count": 46
+      },
+      {
+        "name": "Travel Journal Kyoto Day 3",
+        "entry_id": "JOU-2026-0003",
+        "date": "2025-04-27",
+        "mood": "low",
+        "summary": "Travel Journal Kyoto Day 3, a journalentry used in personal knowledge workflows.",
+        "word_count": 6
+      },
+      {
+        "name": "Weekly Review: Productivity Wins",
+        "entry_id": "JOU-2024-0004",
+        "date": "2026-08-02",
+        "mood": "difficult",
+        "summary": "JournalEntry Weekly Review: Productivity Wins \u2014 cataloged for personal knowledge operations.",
+        "word_count": 42
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "Sarah Chen",
+      "target_label": "Organization",
+      "target_name": "Pacific Northwest Industries"
+    },
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "James Morrison",
+      "target_label": "Organization",
+      "target_name": "Pacific Northwest Industries"
+    },
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "James Morrison",
+      "target_label": "Organization",
+      "target_name": "Summit Healthcare Systems"
+    },
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "Maria Rodriguez",
+      "target_label": "Organization",
+      "target_name": "Summit Healthcare Systems"
+    },
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "David Park",
+      "target_label": "Organization",
+      "target_name": "Summit Healthcare Systems"
+    },
+    {
+      "type": "WORKS_FOR",
+      "source_label": "Person",
+      "source_name": "Elena Volkov",
+      "target_label": "Organization",
+      "target_name": "Meridian Consulting Group"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Meridian Consulting Group",
+      "target_label": "Location",
+      "target_name": "Westside Corporate Campus"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Meridian Consulting Group",
+      "target_label": "Location",
+      "target_name": "Downtown Medical Center"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Pacific Northwest Industries",
+      "target_label": "Location",
+      "target_name": "Mountain Ridge Facility"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Apex Financial Partners",
+      "target_label": "Location",
+      "target_name": "Riverside Research Park"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Greenleaf Technologies",
+      "target_label": "Location",
+      "target_name": "Riverside Research Park"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Greenleaf Technologies",
+      "target_label": "Location",
+      "target_name": "Downtown Medical Center"
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_label": "Organization",
+      "source_name": "Summit Healthcare Systems",
+      "target_label": "Location",
+      "target_name": "Mountain Ridge Facility"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "Sarah Chen",
+      "target_label": "Event",
+      "target_name": "Product Launch Summit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "Sarah Chen",
+      "target_label": "Event",
+      "target_name": "Annual Compliance Audit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "James Morrison",
+      "target_label": "Event",
+      "target_name": "Board of Directors Meeting"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "James Morrison",
+      "target_label": "Event",
+      "target_name": "Annual Compliance Audit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "Maria Rodriguez",
+      "target_label": "Event",
+      "target_name": "Emergency Response Drill"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "David Park",
+      "target_label": "Event",
+      "target_name": "Annual Compliance Audit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "David Park",
+      "target_label": "Event",
+      "target_name": "Product Launch Summit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "Elena Volkov",
+      "target_label": "Event",
+      "target_name": "Annual Compliance Audit"
+    },
+    {
+      "type": "PARTICIPATED_IN",
+      "source_label": "Person",
+      "source_name": "Elena Volkov",
+      "target_label": "Event",
+      "target_name": "Q4 Strategy Review"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "Dr. Sarah Mitchell (Mentor)",
+      "target_label": "Contact",
+      "target_name": "Alex Rivera (Collaborator)"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "Alex Rivera (Collaborator)",
+      "target_label": "Contact",
+      "target_name": "David Okafor (CTO)"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "Prof. James Wu (Advisor)",
+      "target_label": "Contact",
+      "target_name": "David Okafor (CTO)"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "Lisa Park (Editor)",
+      "target_label": "Contact",
+      "target_name": "David Okafor (CTO)"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "David Okafor (CTO)",
+      "target_label": "Contact",
+      "target_name": "Dr. Sarah Mitchell (Mentor)"
+    },
+    {
+      "type": "KNOWS",
+      "source_label": "Contact",
+      "source_name": "David Okafor (CTO)",
+      "target_label": "Contact",
+      "target_name": "Lisa Park (Editor)"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "API Design Best Practices",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "API Design Best Practices",
+      "target_label": "Topic",
+      "target_name": "Graph Database Design"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Topic",
+      "target_name": "Home Automation Setup"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Topic",
+      "target_name": "Creative Writing Techniques"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Recipe: Homemade Ramen",
+      "target_label": "Topic",
+      "target_name": "Creative Writing Techniques"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Recipe: Homemade Ramen",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Workout Routine Week 12",
+      "target_label": "Topic",
+      "target_name": "Machine Learning Fundamentals"
+    },
+    {
+      "type": "TAGGED",
+      "source_label": "Note",
+      "source_name": "Investment Research Notes",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Dr. Sarah Mitchell (Mentor)",
+      "target_label": "Project",
+      "target_name": "Language Learning App"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Dr. Sarah Mitchell (Mentor)",
+      "target_label": "Project",
+      "target_name": "Home Automation Dashboard"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Alex Rivera (Collaborator)",
+      "target_label": "Project",
+      "target_name": "Language Learning App"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Prof. James Wu (Advisor)",
+      "target_label": "Project",
+      "target_name": "Home Automation Dashboard"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Prof. James Wu (Advisor)",
+      "target_label": "Project",
+      "target_name": "Personal Knowledge Graph"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "Lisa Park (Editor)",
+      "target_label": "Project",
+      "target_name": "Personal Knowledge Graph"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "David Okafor (CTO)",
+      "target_label": "Project",
+      "target_name": "Personal Knowledge Graph"
+    },
+    {
+      "type": "WORKED_ON",
+      "source_label": "Contact",
+      "source_name": "David Okafor (CTO)",
+      "target_label": "Project",
+      "target_name": "Photography Portfolio"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "API Design Best Practices",
+      "target_label": "Bookmark",
+      "target_name": "Rust Book Chapter 10"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Bookmark",
+      "target_name": "Hacker News: Distributed Systems"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Bookmark",
+      "target_name": "MDN Web Docs: Fetch API"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Recipe: Homemade Ramen",
+      "target_label": "Bookmark",
+      "target_name": "Rust Book Chapter 10"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Workout Routine Week 12",
+      "target_label": "Bookmark",
+      "target_name": "Hacker News: Distributed Systems"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Workout Routine Week 12",
+      "target_label": "Bookmark",
+      "target_name": "Neo4j Graph Academy"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Investment Research Notes",
+      "target_label": "Bookmark",
+      "target_name": "ArXiv: Attention Is All You Need"
+    },
+    {
+      "type": "REFERENCES",
+      "source_label": "Note",
+      "source_name": "Investment Research Notes",
+      "target_label": "Bookmark",
+      "target_name": "Neo4j Graph Academy"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Machine Learning Fundamentals",
+      "target_label": "Topic",
+      "target_name": "Home Automation Setup"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Machine Learning Fundamentals",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Graph Database Design",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Personal Finance Strategy",
+      "target_label": "Topic",
+      "target_name": "Graph Database Design"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Creative Writing Techniques",
+      "target_label": "Topic",
+      "target_name": "Home Automation Setup"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Creative Writing Techniques",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Home Automation Setup",
+      "target_label": "Topic",
+      "target_name": "Personal Finance Strategy"
+    },
+    {
+      "type": "RELATED_TO",
+      "source_label": "Topic",
+      "source_name": "Home Automation Setup",
+      "target_label": "Topic",
+      "target_name": "Graph Database Design"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "Dr. Sarah Mitchell (Mentor)",
+      "target_label": "JournalEntry",
+      "target_name": "Reflections on Q1 Goals"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "Alex Rivera (Collaborator)",
+      "target_label": "JournalEntry",
+      "target_name": "Travel Journal Kyoto Day 3"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "Prof. James Wu (Advisor)",
+      "target_label": "JournalEntry",
+      "target_name": "Travel Journal Kyoto Day 3"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "Prof. James Wu (Advisor)",
+      "target_label": "JournalEntry",
+      "target_name": "Book Notes: Thinking Fast and Slow"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "Lisa Park (Editor)",
+      "target_label": "JournalEntry",
+      "target_name": "Weekly Review: Productivity Wins"
+    },
+    {
+      "type": "MENTIONED_IN",
+      "source_label": "Contact",
+      "source_name": "David Okafor (CTO)",
+      "target_label": "JournalEntry",
+      "target_name": "Travel Journal Kyoto Day 3"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "API Design Best Practices",
+      "target_label": "Project",
+      "target_name": "Language Learning App"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Project",
+      "target_name": "Photography Portfolio"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "Conference Talk Ideas",
+      "target_label": "Project",
+      "target_name": "Home Automation Dashboard"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "Recipe: Homemade Ramen",
+      "target_label": "Project",
+      "target_name": "Personal Knowledge Graph"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "Workout Routine Week 12",
+      "target_label": "Project",
+      "target_name": "Home Automation Dashboard"
+    },
+    {
+      "type": "BELONGS_TO",
+      "source_label": "Note",
+      "source_name": "Investment Research Notes",
+      "target_label": "Project",
+      "target_name": "Home Automation Dashboard"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Reflections on Q1 Goals",
+      "target_label": "Bookmark",
+      "target_name": "ArXiv: Attention Is All You Need"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Book Notes: Thinking Fast and Slow",
+      "target_label": "Bookmark",
+      "target_name": "MDN Web Docs: Fetch API"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Meeting Takeaways Board Review",
+      "target_label": "Bookmark",
+      "target_name": "Neo4j Graph Academy"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Travel Journal Kyoto Day 3",
+      "target_label": "Bookmark",
+      "target_name": "Neo4j Graph Academy"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Weekly Review: Productivity Wins",
+      "target_label": "Bookmark",
+      "target_name": "ArXiv: Attention Is All You Need"
+    },
+    {
+      "type": "INSPIRED_BY",
+      "source_label": "JournalEntry",
+      "source_name": "Weekly Review: Productivity Wins",
+      "target_label": "Bookmark",
+      "target_name": "MDN Web Docs: Fetch API"
+    }
+  ],
+  "documents": [
+    {
+      "template_id": "journal_entry",
+      "template_name": "Journal Entry",
+      "title": "Journal Entry: Reflections on Q1 Goals",
+      "content": "# Journal Entry\n\n**Date:** 2025-09-12  \n**Domain:** Personal Knowledge  \n**Reference:** JournalEntry: Reflections on Q1 Goals, Topic: Machine Learning Fundamentals, Contact: Dr. Sarah Mitchell (Mentor)\n\n## Summary\n\nThis journal entry documents daily journal entries with reflections and observations. It pertains to JournalEntry: Reflections on Q1 Goals, Topic: Machine Learning Fundamentals, Contact: Dr. Sarah Mitchell (Mentor) and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to JournalEntry: Reflections on Q1 Goals, Topic: Machine Learning Fundamentals, Contact: Dr. Sarah Mitchell (Mentor) are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of JournalEntry: Reflections on Q1 Goals, Topic: Machine Learning Fundamentals, Contact: Dr. Sarah Mitchell (Mentor), the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior journal entry records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "journal_entry",
+      "template_name": "Journal Entry",
+      "title": "Journal Entry: Book Notes: Thinking Fast and Slow",
+      "content": "# Journal Entry\n\n**Date:** 2025-06-19  \n**Domain:** Personal Knowledge  \n**Reference:** JournalEntry: Book Notes: Thinking Fast and Slow, Topic: Graph Database Design, Contact: Alex Rivera (Collaborator)\n\n## Summary\n\nThis journal entry documents daily journal entries with reflections and observations. It pertains to JournalEntry: Book Notes: Thinking Fast and Slow, Topic: Graph Database Design, Contact: Alex Rivera (Collaborator) and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to JournalEntry: Book Notes: Thinking Fast and Slow, Topic: Graph Database Design, Contact: Alex Rivera (Collaborator) are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of JournalEntry: Book Notes: Thinking Fast and Slow, Topic: Graph Database Design, Contact: Alex Rivera (Collaborator), the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior journal entry records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "journal_entry",
+      "template_name": "Journal Entry",
+      "title": "Journal Entry: Meeting Takeaways Board Review",
+      "content": "# Journal Entry\n\n**Date:** 2026-10-13  \n**Domain:** Personal Knowledge  \n**Reference:** JournalEntry: Meeting Takeaways Board Review, Topic: Personal Finance Strategy, Contact: Prof. James Wu (Advisor)\n\n## Summary\n\nThis journal entry documents daily journal entries with reflections and observations. It pertains to JournalEntry: Meeting Takeaways Board Review, Topic: Personal Finance Strategy, Contact: Prof. James Wu (Advisor) and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to JournalEntry: Meeting Takeaways Board Review, Topic: Personal Finance Strategy, Contact: Prof. James Wu (Advisor) are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of JournalEntry: Meeting Takeaways Board Review, Topic: Personal Finance Strategy, Contact: Prof. James Wu (Advisor), the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior journal entry records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "journal_entry",
+      "template_name": "Journal Entry",
+      "title": "Journal Entry: Travel Journal Kyoto Day 3",
+      "content": "# Journal Entry\n\n**Date:** 2024-09-11  \n**Domain:** Personal Knowledge  \n**Reference:** JournalEntry: Travel Journal Kyoto Day 3, Topic: Creative Writing Techniques, Contact: Lisa Park (Editor)\n\n## Summary\n\nThis journal entry documents daily journal entries with reflections and observations. It pertains to JournalEntry: Travel Journal Kyoto Day 3, Topic: Creative Writing Techniques, Contact: Lisa Park (Editor) and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to JournalEntry: Travel Journal Kyoto Day 3, Topic: Creative Writing Techniques, Contact: Lisa Park (Editor) are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of JournalEntry: Travel Journal Kyoto Day 3, Topic: Creative Writing Techniques, Contact: Lisa Park (Editor), the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior journal entry records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "journal_entry",
+      "template_name": "Journal Entry",
+      "title": "Journal Entry: Weekly Review: Productivity Wins",
+      "content": "# Journal Entry\n\n**Date:** 2024-09-03  \n**Domain:** Personal Knowledge  \n**Reference:** JournalEntry: Weekly Review: Productivity Wins, Topic: Home Automation Setup, Contact: David Okafor (CTO)\n\n## Summary\n\nThis journal entry documents daily journal entries with reflections and observations. It pertains to JournalEntry: Weekly Review: Productivity Wins, Topic: Home Automation Setup, Contact: David Okafor (CTO) and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to JournalEntry: Weekly Review: Productivity Wins, Topic: Home Automation Setup, Contact: David Okafor (CTO) are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of JournalEntry: Weekly Review: Productivity Wins, Topic: Home Automation Setup, Contact: David Okafor (CTO), the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior journal entry records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "meeting_notes",
+      "template_name": "Meeting Notes",
+      "title": "Meeting Notes: Dr. Sarah Mitchell (Mentor)",
+      "content": "# Meeting Notes\n\n**Date:** 2024-08-03  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Dr. Sarah Mitchell (Mentor), Project: Personal Knowledge Graph\n\n## Summary\n\nThis meeting notes documents notes from meetings with contacts. It pertains to Contact: Dr. Sarah Mitchell (Mentor), Project: Personal Knowledge Graph and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Dr. Sarah Mitchell (Mentor), Project: Personal Knowledge Graph are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Dr. Sarah Mitchell (Mentor), Project: Personal Knowledge Graph, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior meeting notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "meeting_notes",
+      "template_name": "Meeting Notes",
+      "title": "Meeting Notes: Alex Rivera (Collaborator)",
+      "content": "# Meeting Notes\n\n**Date:** 2025-08-06  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Alex Rivera (Collaborator), Project: Open Source CLI Tool\n\n## Summary\n\nThis meeting notes documents notes from meetings with contacts. It pertains to Contact: Alex Rivera (Collaborator), Project: Open Source CLI Tool and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Alex Rivera (Collaborator), Project: Open Source CLI Tool are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Alex Rivera (Collaborator), Project: Open Source CLI Tool, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior meeting notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "meeting_notes",
+      "template_name": "Meeting Notes",
+      "title": "Meeting Notes: Prof. James Wu (Advisor)",
+      "content": "# Meeting Notes\n\n**Date:** 2024-11-18  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Prof. James Wu (Advisor), Project: Home Automation Dashboard\n\n## Summary\n\nThis meeting notes documents notes from meetings with contacts. It pertains to Contact: Prof. James Wu (Advisor), Project: Home Automation Dashboard and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Prof. James Wu (Advisor), Project: Home Automation Dashboard are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Prof. James Wu (Advisor), Project: Home Automation Dashboard, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior meeting notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "meeting_notes",
+      "template_name": "Meeting Notes",
+      "title": "Meeting Notes: Lisa Park (Editor)",
+      "content": "# Meeting Notes\n\n**Date:** 2024-08-04  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Lisa Park (Editor), Project: Photography Portfolio\n\n## Summary\n\nThis meeting notes documents notes from meetings with contacts. It pertains to Contact: Lisa Park (Editor), Project: Photography Portfolio and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Lisa Park (Editor), Project: Photography Portfolio are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Lisa Park (Editor), Project: Photography Portfolio, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior meeting notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "meeting_notes",
+      "template_name": "Meeting Notes",
+      "title": "Meeting Notes: David Okafor (CTO)",
+      "content": "# Meeting Notes\n\n**Date:** 2025-12-27  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: David Okafor (CTO), Project: Language Learning App\n\n## Summary\n\nThis meeting notes documents notes from meetings with contacts. It pertains to Contact: David Okafor (CTO), Project: Language Learning App and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: David Okafor (CTO), Project: Language Learning App are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: David Okafor (CTO), Project: Language Learning App, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior meeting notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "personal_email",
+      "template_name": "Personal Email",
+      "title": "Personal Email: Dr. Sarah Mitchell (Mentor)",
+      "content": "# Personal Email\n\n**Date:** 2024-05-22  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Dr. Sarah Mitchell (Mentor), Topic: Machine Learning Fundamentals, Project: Personal Knowledge Graph\n\n## Summary\n\nThis personal email documents personal email correspondence. It pertains to Contact: Dr. Sarah Mitchell (Mentor), Topic: Machine Learning Fundamentals, Project: Personal Knowledge Graph and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Dr. Sarah Mitchell (Mentor), Topic: Machine Learning Fundamentals, Project: Personal Knowledge Graph are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Dr. Sarah Mitchell (Mentor), Topic: Machine Learning Fundamentals, Project: Personal Knowledge Graph, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior personal email records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "personal_email",
+      "template_name": "Personal Email",
+      "title": "Personal Email: Alex Rivera (Collaborator)",
+      "content": "# Personal Email\n\n**Date:** 2024-01-24  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Alex Rivera (Collaborator), Topic: Graph Database Design, Project: Open Source CLI Tool\n\n## Summary\n\nThis personal email documents personal email correspondence. It pertains to Contact: Alex Rivera (Collaborator), Topic: Graph Database Design, Project: Open Source CLI Tool and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Alex Rivera (Collaborator), Topic: Graph Database Design, Project: Open Source CLI Tool are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Alex Rivera (Collaborator), Topic: Graph Database Design, Project: Open Source CLI Tool, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior personal email records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "personal_email",
+      "template_name": "Personal Email",
+      "title": "Personal Email: Prof. James Wu (Advisor)",
+      "content": "# Personal Email\n\n**Date:** 2025-03-29  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Prof. James Wu (Advisor), Topic: Personal Finance Strategy, Project: Home Automation Dashboard\n\n## Summary\n\nThis personal email documents personal email correspondence. It pertains to Contact: Prof. James Wu (Advisor), Topic: Personal Finance Strategy, Project: Home Automation Dashboard and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Prof. James Wu (Advisor), Topic: Personal Finance Strategy, Project: Home Automation Dashboard are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Prof. James Wu (Advisor), Topic: Personal Finance Strategy, Project: Home Automation Dashboard, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior personal email records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "personal_email",
+      "template_name": "Personal Email",
+      "title": "Personal Email: Lisa Park (Editor)",
+      "content": "# Personal Email\n\n**Date:** 2026-12-05  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: Lisa Park (Editor), Topic: Creative Writing Techniques, Project: Photography Portfolio\n\n## Summary\n\nThis personal email documents personal email correspondence. It pertains to Contact: Lisa Park (Editor), Topic: Creative Writing Techniques, Project: Photography Portfolio and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: Lisa Park (Editor), Topic: Creative Writing Techniques, Project: Photography Portfolio are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: Lisa Park (Editor), Topic: Creative Writing Techniques, Project: Photography Portfolio, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior personal email records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "personal_email",
+      "template_name": "Personal Email",
+      "title": "Personal Email: David Okafor (CTO)",
+      "content": "# Personal Email\n\n**Date:** 2026-12-24  \n**Domain:** Personal Knowledge  \n**Reference:** Contact: David Okafor (CTO), Topic: Home Automation Setup, Project: Language Learning App\n\n## Summary\n\nThis personal email documents personal email correspondence. It pertains to Contact: David Okafor (CTO), Topic: Home Automation Setup, Project: Language Learning App and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Contact: David Okafor (CTO), Topic: Home Automation Setup, Project: Language Learning App are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Contact: David Okafor (CTO), Topic: Home Automation Setup, Project: Language Learning App, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior personal email records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "project_update",
+      "template_name": "Project Update",
+      "title": "Project Update: Personal Knowledge Graph",
+      "content": "# Project Update\n\n**Date:** 2024-09-30  \n**Domain:** Personal Knowledge  \n**Reference:** Project: Personal Knowledge Graph, Topic: Machine Learning Fundamentals, Note: API Design Best Practices\n\n## Summary\n\nThis project update documents status updates and progress notes for personal projects. It pertains to Project: Personal Knowledge Graph, Topic: Machine Learning Fundamentals, Note: API Design Best Practices and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Project: Personal Knowledge Graph, Topic: Machine Learning Fundamentals, Note: API Design Best Practices are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Project: Personal Knowledge Graph, Topic: Machine Learning Fundamentals, Note: API Design Best Practices, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior project update records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "project_update",
+      "template_name": "Project Update",
+      "title": "Project Update: Open Source CLI Tool",
+      "content": "# Project Update\n\n**Date:** 2026-05-08  \n**Domain:** Personal Knowledge  \n**Reference:** Project: Open Source CLI Tool, Topic: Graph Database Design, Note: Conference Talk Ideas\n\n## Summary\n\nThis project update documents status updates and progress notes for personal projects. It pertains to Project: Open Source CLI Tool, Topic: Graph Database Design, Note: Conference Talk Ideas and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Project: Open Source CLI Tool, Topic: Graph Database Design, Note: Conference Talk Ideas are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Project: Open Source CLI Tool, Topic: Graph Database Design, Note: Conference Talk Ideas, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior project update records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "project_update",
+      "template_name": "Project Update",
+      "title": "Project Update: Home Automation Dashboard",
+      "content": "# Project Update\n\n**Date:** 2026-09-22  \n**Domain:** Personal Knowledge  \n**Reference:** Project: Home Automation Dashboard, Topic: Personal Finance Strategy, Note: Recipe: Homemade Ramen\n\n## Summary\n\nThis project update documents status updates and progress notes for personal projects. It pertains to Project: Home Automation Dashboard, Topic: Personal Finance Strategy, Note: Recipe: Homemade Ramen and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Project: Home Automation Dashboard, Topic: Personal Finance Strategy, Note: Recipe: Homemade Ramen are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Project: Home Automation Dashboard, Topic: Personal Finance Strategy, Note: Recipe: Homemade Ramen, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior project update records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "project_update",
+      "template_name": "Project Update",
+      "title": "Project Update: Photography Portfolio",
+      "content": "# Project Update\n\n**Date:** 2024-06-16  \n**Domain:** Personal Knowledge  \n**Reference:** Project: Photography Portfolio, Topic: Creative Writing Techniques, Note: Workout Routine Week 12\n\n## Summary\n\nThis project update documents status updates and progress notes for personal projects. It pertains to Project: Photography Portfolio, Topic: Creative Writing Techniques, Note: Workout Routine Week 12 and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Project: Photography Portfolio, Topic: Creative Writing Techniques, Note: Workout Routine Week 12 are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Project: Photography Portfolio, Topic: Creative Writing Techniques, Note: Workout Routine Week 12, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior project update records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "project_update",
+      "template_name": "Project Update",
+      "title": "Project Update: Language Learning App",
+      "content": "# Project Update\n\n**Date:** 2024-05-23  \n**Domain:** Personal Knowledge  \n**Reference:** Project: Language Learning App, Topic: Home Automation Setup, Note: Investment Research Notes\n\n## Summary\n\nThis project update documents status updates and progress notes for personal projects. It pertains to Project: Language Learning App, Topic: Home Automation Setup, Note: Investment Research Notes and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Project: Language Learning App, Topic: Home Automation Setup, Note: Investment Research Notes are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Project: Language Learning App, Topic: Home Automation Setup, Note: Investment Research Notes, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior project update records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "reading_notes",
+      "template_name": "Reading Notes",
+      "title": "Reading Notes: Hacker News: Distributed Systems",
+      "content": "# Reading Notes\n\n**Date:** 2026-07-13  \n**Domain:** Personal Knowledge  \n**Reference:** Bookmark: Hacker News: Distributed Systems, Topic: Machine Learning Fundamentals\n\n## Summary\n\nThis reading notes documents notes and highlights from reading bookmarked content. It pertains to Bookmark: Hacker News: Distributed Systems, Topic: Machine Learning Fundamentals and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Bookmark: Hacker News: Distributed Systems, Topic: Machine Learning Fundamentals are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Bookmark: Hacker News: Distributed Systems, Topic: Machine Learning Fundamentals, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior reading notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "reading_notes",
+      "template_name": "Reading Notes",
+      "title": "Reading Notes: ArXiv: Attention Is All You Need",
+      "content": "# Reading Notes\n\n**Date:** 2025-09-19  \n**Domain:** Personal Knowledge  \n**Reference:** Bookmark: ArXiv: Attention Is All You Need, Topic: Graph Database Design\n\n## Summary\n\nThis reading notes documents notes and highlights from reading bookmarked content. It pertains to Bookmark: ArXiv: Attention Is All You Need, Topic: Graph Database Design and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Bookmark: ArXiv: Attention Is All You Need, Topic: Graph Database Design are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Bookmark: ArXiv: Attention Is All You Need, Topic: Graph Database Design, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior reading notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "reading_notes",
+      "template_name": "Reading Notes",
+      "title": "Reading Notes: MDN Web Docs: Fetch API",
+      "content": "# Reading Notes\n\n**Date:** 2025-05-18  \n**Domain:** Personal Knowledge  \n**Reference:** Bookmark: MDN Web Docs: Fetch API, Topic: Personal Finance Strategy\n\n## Summary\n\nThis reading notes documents notes and highlights from reading bookmarked content. It pertains to Bookmark: MDN Web Docs: Fetch API, Topic: Personal Finance Strategy and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Bookmark: MDN Web Docs: Fetch API, Topic: Personal Finance Strategy are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Bookmark: MDN Web Docs: Fetch API, Topic: Personal Finance Strategy, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior reading notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "reading_notes",
+      "template_name": "Reading Notes",
+      "title": "Reading Notes: Neo4j Graph Academy",
+      "content": "# Reading Notes\n\n**Date:** 2026-09-04  \n**Domain:** Personal Knowledge  \n**Reference:** Bookmark: Neo4j Graph Academy, Topic: Creative Writing Techniques\n\n## Summary\n\nThis reading notes documents notes and highlights from reading bookmarked content. It pertains to Bookmark: Neo4j Graph Academy, Topic: Creative Writing Techniques and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Bookmark: Neo4j Graph Academy, Topic: Creative Writing Techniques are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Bookmark: Neo4j Graph Academy, Topic: Creative Writing Techniques, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior reading notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    },
+    {
+      "template_id": "reading_notes",
+      "template_name": "Reading Notes",
+      "title": "Reading Notes: Rust Book Chapter 10",
+      "content": "# Reading Notes\n\n**Date:** 2024-05-30  \n**Domain:** Personal Knowledge  \n**Reference:** Bookmark: Rust Book Chapter 10, Topic: Home Automation Setup\n\n## Summary\n\nThis reading notes documents notes and highlights from reading bookmarked content. It pertains to Bookmark: Rust Book Chapter 10, Topic: Home Automation Setup and was prepared as part of standard personal knowledge operations.\n\n## Details\n\nThe following information has been compiled based on available records and observations. All referenced entities have been verified against the current knowledge graph.\n\nKey findings and observations related to Bookmark: Rust Book Chapter 10, Topic: Home Automation Setup are documented below. This record should be reviewed in conjunction with related documents and entity records for complete context.\n\n## Recommendations\n\nBased on the analysis of Bookmark: Rust Book Chapter 10, Topic: Home Automation Setup, the following actions are recommended for continued monitoring and follow-up. Please refer to the relevant entity profiles and prior reading notes records for historical context and trend analysis.\n\n---\n\n*Document generated for Personal Knowledge context graph application.*"
+    }
+  ],
+  "traces": [
+    {
+      "id": "knowledge_connection",
+      "task": "Find meaningful connections between Creative Writing Techniques and other knowledge areas",
+      "steps": [
+        {
+          "thought": "Identify notes and bookmarks related to this topic",
+          "action": "Query all notes and bookmarks tagged with or referencing this topic",
+          "observation": "Found 7 relevant records in the personal knowledge knowledge graph. Top result: Creative Writing Techniques with 2 connected entities."
+        },
+        {
+          "thought": "Look for overlapping contacts and projects",
+          "action": "Find people and projects connected to this topic's knowledge cluster",
+          "observation": "Action completed for David Okafor (CTO). Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Discover non-obvious cross-topic connections",
+          "action": "Traverse topic relationships to find bridging concepts",
+          "observation": "Action completed for Language Learning App. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Found the assessed criteria connections, strongest link: the assessed criteria"
+    },
+    {
+      "id": "project_prioritization",
+      "task": "Prioritize among active projects based on current context",
+      "steps": [
+        {
+          "thought": "Review all active projects and their recent activity",
+          "action": "Query projects by status and recent note/update frequency",
+          "observation": "Found 11 relevant records in the personal knowledge knowledge graph. Top result: Graph Database Design with 4 connected entities."
+        },
+        {
+          "thought": "Assess alignment with current journal reflections and goals",
+          "action": "Cross-reference project topics with recent journal entries",
+          "observation": "Action completed for Weekly Review: Productivity Wins. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Consider deadline proximity and contact dependencies",
+          "action": "Check project deadlines and collaborator availability",
+          "observation": "Verified Weekly Review: Productivity Wins against personal knowledge standards. All 7 checked parameters within acceptable thresholds."
+        }
+      ],
+      "outcome": "Priority ranking: the assessed criteria based on the assessed criteria"
+    },
+    {
+      "id": "contact_reconnection",
+      "task": "Identify contacts to reconnect with based on shared interests",
+      "steps": [
+        {
+          "thought": "Find contacts not reached out to recently",
+          "action": "Query contacts ordered by last_contact date ascending",
+          "observation": "Found 6 relevant records in the personal knowledge knowledge graph. Top result: Hacker News: Distributed Systems with 3 connected entities."
+        },
+        {
+          "thought": "Match dormant contacts with active topics and projects",
+          "action": "Find topic and project overlaps between user activity and contacts",
+          "observation": "Action completed for Travel Journal Kyoto Day 3. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Generate personalized reconnection suggestions",
+          "action": "Pull shared notes, projects, and recent bookmarks relevant to each contact",
+          "observation": "Action completed for Technical Specification. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Suggest reconnecting with the assessed criteria about the assessed criteria"
+    },
+    {
+      "id": "learning_path_design",
+      "task": "Design a learning path for exploring Personal Finance Strategy based on existing knowledge",
+      "steps": [
+        {
+          "thought": "Assess current knowledge depth from notes and bookmarks on this topic",
+          "action": "Query all notes tagged with this topic and their note types to gauge depth",
+          "observation": "Found 9 relevant records in the personal knowledge knowledge graph. Top result: Personal Knowledge Graph with 4 connected entities."
+        },
+        {
+          "thought": "Identify prerequisite topics and knowledge gaps",
+          "action": "Traverse related topics and check which have sparse or no notes",
+          "observation": "Verified Standard Operating Procedure against personal knowledge standards. All 5 checked parameters within acceptable thresholds."
+        },
+        {
+          "thought": "Find relevant unread bookmarks and reading materials",
+          "action": "Search bookmarks related to this topic with read_status of unread or reading",
+          "observation": "Found 7 relevant records in the personal knowledge knowledge graph. Top result: Elena Volkov with 4 connected entities."
+        },
+        {
+          "thought": "Sequence resources from foundational to advanced",
+          "action": "Order materials by topic dependency and complexity level",
+          "observation": "Action completed for Emergency Response Drill. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Learning path: the assessed criteria covering the assessed criteria resources over the assessed criteria"
+    },
+    {
+      "id": "weekly_review",
+      "task": "Generate a weekly review of knowledge activities and insights",
+      "steps": [
+        {
+          "thought": "Summarize notes created and updated during the week",
+          "action": "Query notes by created_at and updated_at within the last 7 days",
+          "observation": "Found 4 relevant records in the personal knowledge knowledge graph. Top result: Maria Rodriguez with 4 connected entities."
+        },
+        {
+          "thought": "Review journal entries for mood trends and reflections",
+          "action": "Query journal entries for the week and analyze mood patterns",
+          "observation": "Found 4 relevant records in the personal knowledge knowledge graph. Top result: MDN Web Docs: Fetch API with 3 connected entities."
+        },
+        {
+          "thought": "Identify progress on active projects",
+          "action": "Check for notes and updates linked to active projects this week",
+          "observation": "Verified Apex Financial Partners against personal knowledge standards. All 8 checked parameters within acceptable thresholds."
+        },
+        {
+          "thought": "Surface emerging themes and connections",
+          "action": "Find topics that appeared across multiple notes and journal entries",
+          "observation": "Action completed for David Park. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Weekly summary: the assessed criteria notes, mood trend: the assessed criteria, active topics: the assessed criteria"
+    },
+    {
+      "id": "bookmark_triage",
+      "task": "Triage unread bookmarks to prioritize reading queue",
+      "steps": [
+        {
+          "thought": "Identify all unread bookmarks and their age",
+          "action": "Query bookmarks with read_status unread ordered by saved_at",
+          "observation": "Found 6 relevant records in the personal knowledge knowledge graph. Top result: Recipe: Homemade Ramen with 6 connected entities."
+        },
+        {
+          "thought": "Match bookmarks to active projects and current interests",
+          "action": "Cross-reference bookmark topics with active project topics and recent notes",
+          "observation": "Action completed for David Okafor (CTO). Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Prioritize by relevance to current goals",
+          "action": "Rank bookmarks by connection strength to active projects and recent journal themes",
+          "observation": "Action completed for Book Notes: Thinking Fast and Slow. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Priority queue: the assessed criteria. Archive candidates: the assessed criteria"
+    },
+    {
+      "id": "project_scoping",
+      "task": "Scope out a new project idea inspired by Home Automation Setup connections",
+      "steps": [
+        {
+          "thought": "Review notes and bookmarks that sparked the idea",
+          "action": "Query notes and bookmarks tagged with this topic and related topics",
+          "observation": "Found 3 relevant records in the personal knowledge knowledge graph. Top result: Prof. James Wu (Advisor) with 3 connected entities."
+        },
+        {
+          "thought": "Identify contacts with relevant expertise or interest",
+          "action": "Find contacts connected to this topic through projects or notes",
+          "observation": "Action completed for David Park. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Assess effort and define milestones",
+          "action": "Review similar past projects for duration and complexity patterns",
+          "observation": "Review of Sarah Chen completed. Identified 5 key factors relevant to the current decision context."
+        },
+        {
+          "thought": "Draft a project outline with key resources",
+          "action": "Compile relevant notes, bookmarks, and contacts into a project brief",
+          "observation": "Action completed for Personal Finance Strategy. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Project scope: the assessed criteria. Key contacts: the assessed criteria. Estimated effort: the assessed criteria"
+    },
+    {
+      "id": "journal_pattern_analysis",
+      "task": "Analyze patterns in journal entries to identify recurring themes and triggers",
+      "steps": [
+        {
+          "thought": "Identify mood patterns over time",
+          "action": "Query journal entries grouped by mood and analyze frequency trends",
+          "observation": "Found 10 relevant records in the personal knowledge knowledge graph. Top result: Alex Rivera (Collaborator) with 5 connected entities."
+        },
+        {
+          "thought": "Correlate moods with topics and activities",
+          "action": "Cross-reference journal mood with topics and contacts mentioned",
+          "observation": "Action completed for Weekly Review: Productivity Wins. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Surface recurring concerns or aspirations",
+          "action": "Find themes that appear in multiple journal entries across different periods",
+          "observation": "Action completed for James Morrison. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Patterns: the assessed criteria. Positive triggers: the assessed criteria. Attention areas: the assessed criteria"
+    },
+    {
+      "id": "note_consolidation",
+      "task": "Consolidate fragmented notes on Personal Finance Strategy into coherent knowledge",
+      "steps": [
+        {
+          "thought": "Find all notes related to this topic across types",
+          "action": "Query fleeting, literature, and reference notes tagged with this topic",
+          "observation": "Found 4 relevant records in the personal knowledge knowledge graph. Top result: Travel Journal Kyoto Day 3 with 4 connected entities."
+        },
+        {
+          "thought": "Identify overlapping content and contradictions",
+          "action": "Compare note contents for redundancy and conflicting information",
+          "observation": "Action completed for Investment Research Notes. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Determine which notes should be merged into permanent notes",
+          "action": "Assess note quality and identify candidates for consolidation",
+          "observation": "Action completed for Compliance Certificate. Results consistent with expected personal knowledge domain patterns."
+        },
+        {
+          "thought": "Identify gaps that need additional research",
+          "action": "Find questions raised in notes that remain unanswered",
+          "observation": "Action completed for Meridian Consulting Group. Results consistent with expected personal knowledge domain patterns."
+        }
+      ],
+      "outcome": "Consolidation: the assessed criteria notes merged, the assessed criteria gaps identified, the assessed criteria permanent notes created"
+    }
+  ]
+}
