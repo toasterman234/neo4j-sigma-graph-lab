@@ -4,7 +4,7 @@
 Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j database, with human-readable source inspection and bounded whole-graph retrieval followed by server-side Jev reasoning.
 
 ## Current Phase
-- Phase 7: Persisted Jev results
+- Phase 8: Jev result presentation
 
 ## Phases
 
@@ -48,6 +48,14 @@ Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j d
 - [x] Add save/list API routes and saved-results UI.
 - [x] Keep SQLite local/ignored and Neo4j read-only.
 - [x] Verify persistence across server restart, size limits, typecheck, build, and tests.
+- **Status:** complete
+
+### Phase 8: Jev result presentation
+- [x] Replace raw Jev JSON with typed answer cards, distributions, meters, and provenance.
+- [x] Improve search scope/mode/question controls with explicit button groups.
+- [x] Make saved results reopenable and distinguish saved/provider states.
+- [x] Add evidence and provisional relationship presentation improvements.
+- [x] Verify typecheck, build, saved-result reopening, and read-only protections.
 - **Status:** complete
 
 ## Decisions

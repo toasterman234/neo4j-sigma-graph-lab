@@ -55,6 +55,14 @@
 - Verified save/list persistence across a server restart using a temporary SQLite database.
 - Backend tests remain passing from the previous phase: 4 passed.
 
+## 2026-09-23 — Jev result presentation
+- Replaced raw Jev JSON presentation with typed answer cards for boolean/noul probabilities, choice distributions, scores, provider confidence, and unverified-decision labeling.
+- Replaced native scope/mode/question selectors with explicit button groups and tooltips for the supported search and Jev options.
+- Made saved result cards reopen the full judgment/evidence view and distinguish saved results from live provider responses.
+- Preserved evidence focus actions and provisional relationship warnings.
+- Verified typecheck and production build passed.
+- Verified a saved result reopened with its typed judgment and mutation rejection remained HTTP 400.
+
 ## 2026-09-23 — GitHub update
 - Prepared the pending implementation changes for `origin/main` at `toasterman234/neo4j-sigma-graph-lab`.
 - Final verification before publish: frontend typecheck/build passed, backend tests passed, SQLite restart/size-limit checks passed, and `git diff --check` passed.

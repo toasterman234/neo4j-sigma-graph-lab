@@ -73,6 +73,8 @@ The default view is intentionally limited. The database has thousands of nodes, 
 
 Search scopes are `whole`, `selected`, and `neighborhood`; modes are `keyword`, `property`, `document`, and `relationship`. Retrieval is capped at 80 results and 120 graph nodes. Search results are grouped into source/document, semantic node, and relationship results in the UI.
 
+The explorer presents Jev output as typed answer cards rather than raw JSON: `noul`/boolean probabilities use meters, `choice` answers show candidate distributions, and `score` answers show the numeric score. Results are labeled `Provider response` / `Unverified decision` or `Saved`, and the UI preserves unknown/error states through the request status. Scope, mode, and Jev focus use explicit button groups with tooltips; saved result cards reopen the full judgment and evidence context.
+
 `POST /api/jev/run` repeats the bounded retrieval server-side, selects only result-linked nodes, limits Jev input to 24 nodes and 40 relationships, truncates evidence excerpts, and includes an explicit untrusted-evidence policy. Jev returns typed judgments rather than prose. The application displays result excerpts and any candidate relationship as provisional. No endpoint in this feature mutates Neo4j.
 
 Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.data/graph-lab.sqlite` using SQLite. The database is local, ignored by Git, capped at 100 saved runs, and stores the query, search scope/mode, typed judgment, confidence, bounded evidence, and provisional suggestions. It does not store Neo4j credentials or write back to Neo4j.

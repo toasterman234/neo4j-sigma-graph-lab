@@ -21,6 +21,14 @@ html, body { height: 100%; }
 .sigma-search-options button { border: 1px solid #22d3ee; border-radius: 5px; background: #164e63; color: #cffafe; padding: 7px 10px; cursor: pointer; }
 .sigma-search-options button:disabled { opacity: .5; cursor: default; }
 .sigma-reason-question input { flex: 1; min-width: 240px; border: 1px solid #475569; border-radius: 5px; background: #020617; color: #e2e8f0; padding: 7px; }
+.sigma-selector-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sigma-selector-group > span { min-width: 62px; color: #94a3b8; font-size: 12px; font-weight: 600; }
+.sigma-segmented { display: flex; gap: 4px; flex-wrap: wrap; }
+.sigma-segmented button { padding: 5px 8px; border-color: #334155; background: #0f172a; font-size: 12px; }
+.sigma-segmented button.selected { border-color: #22d3ee; background: #164e63; color: #cffafe; }
+.sigma-search-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.sigma-primary-button { border-color: #22d3ee !important; background: #164e63 !important; color: #cffafe !important; font-weight: 600; }
+.sigma-badge { display: inline-flex; width: fit-content; padding: 3px 6px; border: 1px solid #475569; border-radius: 999px; color: #bae6fd; font: 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
 .sigma-search-results { position: absolute; z-index: 5; top: 112px; left: 16px; right: 16px; max-height: 360px; overflow: auto; background: #1e293b; border: 1px solid #475569; }
 .sigma-controls input, .sigma-controls textarea { width: 100%; border: 1px solid #475569; border-radius: 5px; background: #020617; color: #e2e8f0; padding: 8px; }
 .sigma-controls textarea { min-height: 62px; font: 12px ui-monospace, monospace; }
@@ -42,10 +50,26 @@ html, body { height: 100%; }
 .sigma-saved-results { display: grid; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #334155; background: #111827; }
 .sigma-saved-results > span { margin-left: 8px; }
 .sigma-saved-results > div { display: flex; gap: 8px; overflow-x: auto; }
-.sigma-saved-results article { display: grid; gap: 3px; min-width: 220px; padding: 8px; border: 1px solid #334155; border-radius: 5px; background: #0f172a; }
-.sigma-saved-results article strong { color: #bae6fd; font-size: 12px; }
-.sigma-saved-results article span, .sigma-saved-results article small { color: #94a3b8; font-size: 11px; }
+.sigma-saved-results button { display: grid; gap: 3px; min-width: 220px; padding: 8px; border: 1px solid #334155; border-radius: 5px; background: #0f172a; color: #e2e8f0; text-align: left; cursor: pointer; }
+.sigma-saved-results button:hover, .sigma-saved-results button.active { border-color: #22d3ee; background: #164e63; }
+.sigma-saved-results button strong { color: #bae6fd; font-size: 12px; }
+.sigma-saved-results button span, .sigma-saved-results button small { color: #94a3b8; font-size: 11px; }
 .sigma-reasoning pre { max-height: 220px; overflow: auto; margin: 0; }
+.jev-answer-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.jev-answer-card { display: grid; gap: 8px; padding: 10px; border: 1px solid #334155; border-radius: 7px; background: #111827; }
+.jev-answer-heading, .jev-answer-value, .jev-distribution-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.jev-answer-heading strong { font-size: 12px; }
+.jev-answer-value { color: #cffafe; font: 13px ui-monospace, monospace; }
+.jev-answer-value strong { color: #f8fafc; }
+.jev-meter { height: 6px; overflow: hidden; border-radius: 999px; background: #1e293b; }
+.jev-meter > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22d3ee, #a78bfa); }
+.jev-distribution { display: grid; gap: 6px; }
+.jev-distribution-row { font-size: 11px; }
+.jev-distribution-row > span { min-width: 82px; color: #cbd5e1; }
+.jev-distribution-row > .jev-meter { flex: 1; }
+.jev-distribution-row b { min-width: 34px; color: #94a3b8; font: 11px ui-monospace, monospace; text-align: right; }
+.jev-answer-confidence, .sigma-unverified-note { color: #94a3b8; font-size: 11px; }
+.sigma-unverified-note { padding-top: 4px; border-top: 1px solid #334155; }
 .sigma-reasoning h4 { margin: 8px 0 0; font-size: 12px; }
 .sigma-evidence-list { display: grid; gap: 5px; }
 .sigma-evidence-list button { padding: 7px; border: 1px solid #334155; border-radius: 5px; background: #111827; color: #cbd5e1; text-align: left; cursor: pointer; font-size: 12px; }
@@ -85,7 +109,7 @@ html, body { height: 100%; }
 .schema-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; } .token-list { display: flex; flex-wrap: wrap; gap: 7px; } .token-list span { padding: 5px 8px; border-radius: 5px; background: #164e63; color: #a5f3fc; font: 12px ui-monospace, monospace; } .relationship-tokens span { background: #312e81; color: #c4b5fd; }
 .query-example { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155; } .query-example strong { display: block; margin-bottom: 5px; } .query-example code { display: block; color: #93c5fd; font: 12px ui-monospace, monospace; white-space: pre-wrap; } .query-example button { flex: 0 0 auto; padding: 5px 8px; border: 1px solid #475569; border-radius: 5px; background: #1e293b; color: #e2e8f0; cursor: pointer; }
 .handoff-panel ol { padding-left: 24px; margin: 16px 0 22px; } .handoff-panel li { padding: 5px 0; } .handoff-panel code, .modeling-panel code { color: #a5f3fc; font: 12px ui-monospace, monospace; }
-@media (max-width: 760px) { .modeling-header { display: block; } .modeling-header .modeling-primary { margin-top: 18px; } .modeling-card-grid, .schema-columns { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .modeling-header { display: block; } .modeling-header .modeling-primary { margin-top: 18px; } .modeling-card-grid, .schema-columns, .jev-answer-grid { grid-template-columns: 1fr; } .sigma-selector-group { align-items: flex-start; flex-direction: column; } }
 
 /* Markdown content styling for chat messages */
 .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 600; margin-top: .5em; margin-bottom: .25em; }
