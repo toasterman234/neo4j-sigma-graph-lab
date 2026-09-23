@@ -195,10 +195,6 @@ export function FocusGraph({
               />
             );
           })}
-          <circle cx={CX} cy={CY} r={26} fill={colorFor(centerKind)} />
-          <text x={CX} y={CY + 3.5} textAnchor="middle" fontSize={10} fill="#0b0f1a" fontWeight={700}>
-            {shortKind(centerKind)}
-          </text>
           {shown.map((nb, i) => {
             const p = positions[i];
             const kind = kindOf(nb.node.labels, nb.node.properties.kind);
@@ -211,6 +207,10 @@ export function FocusGraph({
               </g>
             );
           })}
+          <circle cx={CX} cy={CY} r={26} fill={colorFor(centerKind)} />
+          <text x={CX} y={CY + 3.5} textAnchor="middle" fontSize={10} fill="#0b0f1a" fontWeight={700}>
+            {shortKind(centerKind)}
+          </text>
         </svg>
       )}
 
