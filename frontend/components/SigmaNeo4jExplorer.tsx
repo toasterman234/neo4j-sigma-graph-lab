@@ -4,10 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Graph from "graphology";
 import Sigma from "sigma";
 import { LabNav } from "@/components/LabNav";
-
-type NodePayload = { id: string; labels: string[]; properties: Record<string, unknown> };
-type EdgePayload = { id: string; source: string; target: string; type: string };
-type GraphPayload = { nodes: NodePayload[]; relationships: EdgePayload[]; counts?: { nodes: number; relationships: number } };
+import { buildDocumentSourceView, displayDate, rawSourceProperties, type GraphPayload, type NodePayload, type SourceSummary } from "@/lib/documentSource";
+import type { SearchMode, SearchResult, SearchScope } from "@/lib/sigmaNeo4j";
 
 const DEFAULT_QUERY = "MATCH (n)-[r]-(m) RETURN n, r, m LIMIT $limit";
 const palette = ["#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#fb7185", "#f97316"];
@@ -17,11 +15,11 @@ function titleOf(node: NodePayload) {
   const p = node.properties || {};
   return String(p.name ?? p.title ?? p.path ?? p.id ?? `${labelOf(node)} ${node.id}`);
 }
-function colorOf(node: NodePayload) { return palette[node.labels.join(":").length % palette.length]; }
+function colorOf(node: NodePayload) { return node.labels.join(":").includes("Document") ? "#22d3ee" : palette[node.labels.join(":").length % palette.length]; }
 function mergePayload(graph: Graph, payload: GraphPayload) {
   payload.nodes.forEach((node, index) => {
     if (!graph.hasNode(node.id)) graph.addNode(node.id, {
-      label: titleOf(node), size: 8, color: colorOf(node), x: Math.cos(index * 0.7) * 10, y: Math.sin(index * 0.7) * 10,
+      label: titleOf(node), size: node.labels.includes("Document") ? 13 : 8, color: colorOf(node), x: Math.cos(index * 0.7) * 10, y: Math.sin(index * 0.7) * 10,
       explorerLabels: node.labels, explorerProperties: node.properties,
     });
     else graph.mergeNodeAttributes(node.id, { explorerLabels: node.labels, explorerProperties: node.properties });
@@ -33,6 +31,12 @@ function mergePayload(graph: Graph, payload: GraphPayload) {
   });
 }
 
+function semanticNodes(source: SourceSummary, nodesById: Map<string, NodePayload>): NodePayload[] {
+  return source.semanticNodeIds.map((id) => nodesById.get(id)).filter((node): node is NodePayload => Boolean(node));
+}
+
+type SavedResultSummary = { id: number; createdAt: string; query: string; scope: SearchScope; mode: SearchMode; question: string; boundedNodeCount: number; boundedRelationshipCount: number; resultCount: number };
+
 export function SigmaNeo4jExplorer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sigmaRef = useRef<Sigma | null>(null);
@@ -41,87 +45,132 @@ export function SigmaNeo4jExplorer() {
   const [selected, setSelected] = useState<NodePayload | null>(null);
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [search, setSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<NodePayload[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchScope, setSearchScope] = useState<SearchScope>("whole");
+  const [searchMode, setSearchMode] = useState<SearchMode>("keyword");
+  const [reasonQuestion, setReasonQuestion] = useState("Are any important relationships missing between these results?");
+  const [reasonType, setReasonType] = useState("missing_relationship");
+  const [reasoning, setReasoning] = useState<Record<string, unknown> | null>(null);
+  const [reasonBusy, setReasonBusy] = useState(false);
+  const [savedResults, setSavedResults] = useState<SavedResultSummary[]>([]);
+  const [saveBusy, setSaveBusy] = useState(false);
   const [hiddenLabels, setHiddenLabels] = useState<string[]>([]);
   const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
   const [status, setStatus] = useState("Loading real Neo4j data…");
   const [busy, setBusy] = useState(false);
+  const [rawOpen, setRawOpen] = useState(false);
 
-  const nodesById = useMemo(() => new Map((payload?.nodes || []).map((n) => [n.id, n])), [payload]);
-  const allLabels = useMemo(() => Array.from(new Set((payload?.nodes || []).flatMap((n) => n.labels))).sort(), [payload]);
-  const allTypes = useMemo(() => Array.from(new Set((payload?.relationships || []).map((r) => r.type))).sort(), [payload]);
+  const view = useMemo(() => payload ? buildDocumentSourceView(payload) : null, [payload]);
+  const visiblePayload = view?.payload || null;
+  const selectedSource = selected?.labels.includes("Document") ? view?.sources.get(selected.id) : null;
+  const nodesById = useMemo(() => new Map((visiblePayload?.nodes || []).map((n) => [n.id, n])), [visiblePayload]);
+  const allLabels = useMemo(() => Array.from(new Set((visiblePayload?.nodes || []).flatMap((n) => n.labels))).sort(), [visiblePayload]);
+  const allTypes = useMemo(() => Array.from(new Set((visiblePayload?.relationships || []).map((r) => r.type))).sort(), [visiblePayload]);
+  const resultGroups = useMemo(() => ({
+    Sources: searchResults.filter((result) => result.kind === "source"),
+    Nodes: searchResults.filter((result) => result.kind === "node"),
+    Relationships: searchResults.filter((result) => result.kind === "relationship"),
+  }), [searchResults]);
 
-  async function load(url: string, body?: GraphPayload) {
+  async function load(url: string) {
     setBusy(true);
     try {
-      const response = await fetch(url, body ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : undefined);
+      const response = await fetch(url);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Neo4j request failed");
-      setPayload(data); setStatus(`${data.counts?.nodes ?? data.nodes.length} nodes · ${data.counts?.relationships ?? data.relationships.length} relationships · read-only`);
+      setPayload(data); setStatus(`${data.counts?.nodes ?? data.nodes.length} graph nodes · ${data.counts?.relationships ?? data.relationships.length} relationships · document view · read-only`);
       return data as GraphPayload;
     } catch (error) { setStatus(error instanceof Error ? error.message : "Request failed"); }
     finally { setBusy(false); }
   }
   async function runQuery() { await load(`/api/explorer/graph?limit=300&query=${encodeURIComponent(query)}`); }
-  async function expand() { if (!selected) return; await load(`/api/explorer/expand?nodeId=${encodeURIComponent(selected.id)}&limit=160`); }
+  async function expand() {
+    if (!selected) return;
+    const sourceChunk = selectedSource?.chunks[0];
+    const nodeId = sourceChunk?.id || selected.id;
+    await load(`/api/explorer/expand?nodeId=${encodeURIComponent(nodeId)}&limit=160`);
+  }
 
-  useEffect(() => { void load("/api/explorer/graph?limit=300"); }, []);
+  useEffect(() => { void load("/api/explorer/graph?limit=300"); void fetch("/api/results").then((response) => response.json()).then((data) => setSavedResults(data.results || [])).catch(() => undefined); }, []);
   useEffect(() => {
     if (!search.trim()) { setSearchResults([]); return; }
     const timer = setTimeout(async () => {
-      const response = await fetch(`/api/explorer/search?q=${encodeURIComponent(search)}&limit=30`);
+      const selectedIds = selectedSource ? selectedSource.chunks.map((chunk) => chunk.id).slice(0, 20) : selected ? [selected.id] : [];
+      const response = await fetch(`/api/explorer/search?q=${encodeURIComponent(search)}&scope=${searchScope}&mode=${searchMode}&selected=${encodeURIComponent(selectedIds.join(","))}&limit=40`);
       const data = await response.json(); setSearchResults(data.results || []);
-    }, 250);
+    }, 350);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, searchScope, searchMode, selected]);
   useEffect(() => {
-    if (!containerRef.current || !payload) return;
+    if (!containerRef.current || !visiblePayload) return;
     const graph = graphRef.current;
-    graph.clear(); mergePayload(graph, payload);
+    graph.clear(); mergePayload(graph, visiblePayload);
     sigmaRef.current?.kill();
     const renderer = new Sigma(graph, containerRef.current, {
-      renderEdgeLabels: true,
-      defaultEdgeType: "arrow",
-      labelColor: { color: "#e2e8f0" },
-      edgeLabelColor: { color: "#cbd5e1" },
-      nodeReducer: (node, attrs) => {
-        const labels = (attrs.explorerLabels || []) as string[];
-        const hidden = labels.some((x) => hiddenLabels.includes(x));
-        return { ...attrs, hidden, label: hidden ? "" : attrs.label };
-      },
+      renderEdgeLabels: true, defaultEdgeType: "arrow", labelColor: { color: "#e2e8f0" }, edgeLabelColor: { color: "#cbd5e1" },
+      nodeReducer: (node, attrs) => { const labels = (attrs.explorerLabels || []) as string[]; const hidden = labels.some((x) => hiddenLabels.includes(x)); return { ...attrs, hidden, label: hidden ? "" : attrs.label }; },
       edgeReducer: (edge, attrs) => ({ ...attrs, hidden: hiddenTypes.includes(String(attrs.explorerType)) }),
     });
-    renderer.on("clickNode", ({ node }) => {
-      const found = nodesById.get(String(node)); if (found) setSelected(found);
-      renderer.getCamera().animate({ ...renderer.getNodeDisplayData(node), ratio: 0.35 }, { duration: 500 });
-    });
+    renderer.on("clickNode", ({ node }) => { const found = nodesById.get(String(node)); if (found) setSelected(found); renderer.getCamera().animate({ ...renderer.getNodeDisplayData(node), ratio: 0.35 }, { duration: 500 }); });
     sigmaRef.current = renderer;
     return () => renderer.kill();
-  }, [payload, hiddenLabels, hiddenTypes, nodesById]);
+  }, [visiblePayload, hiddenLabels, hiddenTypes, nodesById]);
 
   function focus(node: NodePayload) {
-    setSelected(node); setSearch("");
-    const renderer = sigmaRef.current; if (renderer && graphRef.current.hasNode(node.id)) renderer.getCamera().animate({ ...renderer.getNodeDisplayData(node.id), ratio: 0.25 }, { duration: 500 });
+    const source = view && Array.from(view.sources.values()).find((candidate) => candidate.chunks.some((chunk) => chunk.id === node.id));
+    const visibleNode = source ? visiblePayload?.nodes.find((candidate) => candidate.id === source.key) : node;
+    if (!visibleNode) return;
+    setSelected(visibleNode); setSearch("");
+    const renderer = sigmaRef.current;
+    if (renderer && graphRef.current.hasNode(visibleNode.id)) renderer.getCamera().animate({ ...renderer.getNodeDisplayData(visibleNode.id), ratio: 0.25 }, { duration: 500 });
+  }
+  function focusResult(result: SearchResult) {
+    const id = result.kind === "relationship" ? result.sourceNodeIds?.[0] : result.id;
+    if (!id) return;
+    const node = visiblePayload?.nodes.find((candidate) => candidate.id === id);
+    if (node) return focus(node);
+    focus({ id, labels: result.labels, properties: result.properties || { title: result.title } });
+  }
+  async function reasonWithJev() {
+    if (!search.trim()) return;
+    setReasonBusy(true); setReasoning(null);
+    try {
+      const response = await fetch("/api/jev/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: search, scope: searchScope, mode: searchMode, selectedNodeIds: selectedSource ? selectedSource.chunks.map((chunk) => chunk.id).slice(0, 20) : selected ? [selected.id] : [], question: reasonQuestion, questionType: reasonType }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Jev request failed");
+      setReasoning(data);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Jev request failed"); }
+    finally { setReasonBusy(false); }
+  }
+  async function saveReasoning() {
+    if (!reasoning || !search.trim()) return;
+    setSaveBusy(true);
+    try {
+      const response = await fetch("/api/results", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: search, scope: searchScope, mode: searchMode, result: reasoning }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save result");
+      setSavedResults((current) => [data.result, ...current.filter((result) => result.id !== data.result.id)].slice(0, 100));
+      setStatus(`Saved Jev result #${data.result.id} locally in SQLite`);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Unable to save result"); }
+    finally { setSaveBusy(false); }
   }
   function toggle(items: string[], value: string, setter: (value: string[]) => void) { setter(items.includes(value) ? items.filter((x) => x !== value) : [...items, value]); }
 
   return <div className="sigma-explorer">
     <LabNav active="explorer" />
-    <div className="sigma-toolbar">
-      <div><strong>Neo4j Sigma Explorer</strong><span className="sigma-muted"> read-only · bounded to 300–500 nodes</span></div>
-      <button onClick={runQuery} disabled={busy}>{busy ? "Loading…" : "Run Cypher"}</button>
-      <button onClick={expand} disabled={!selected || busy}>Expand selected</button>
-    </div>
+    <div className="sigma-toolbar"><div><strong>Neo4j Sigma Explorer</strong><span className="sigma-muted"> document/source view · raw evidence on demand</span></div><button onClick={runQuery} disabled={busy}>{busy ? "Loading…" : "Run Cypher"}</button><button onClick={expand} disabled={!selected || busy}>Expand selected</button></div>
     <div className="sigma-controls">
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search node properties…" />
-      {searchResults.length > 0 && <div className="sigma-search-results">{searchResults.map((node) => <button key={node.id} onClick={() => focus(node)}>{labelOf(node)} · {titleOf(node)} <small>#{node.id}</small></button>)}</div>}
+      <div className="sigma-search-heading"><strong>Graph-wide search</strong><span className="sigma-muted">retrieval is bounded before any Jev reasoning</span></div>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search graph extraction, Neo4j decisions, related documents…" />
+      <div className="sigma-search-options"><label>Scope<select value={searchScope} onChange={(e) => setSearchScope(e.target.value as SearchScope)}><option value="whole">Whole graph</option><option value="neighborhood">Neighborhood</option><option value="selected">Selected node</option></select></label><label>Mode<select value={searchMode} onChange={(e) => setSearchMode(e.target.value as SearchMode)}><option value="keyword">Keyword</option><option value="property">Properties</option><option value="document">Documents / content</option><option value="relationship">Relationships</option></select></label><button onClick={reasonWithJev} disabled={!search.trim() || reasonBusy}>{reasonBusy ? "Reasoning…" : "Reason with Jev"}</button></div>
+      {searchResults.length > 0 && <div className="sigma-search-results">{Object.entries(resultGroups).map(([group, results]) => results.length > 0 && <div key={group}><h4>{group} <small>{results.length}</small></h4>{results.map((result) => <button key={`${result.kind}:${result.id}`} onClick={() => focusResult(result)}><strong>{result.title}</strong><span>{result.labels.join(" · ")} · {result.snippet}</span></button>)}</div>)}</div>}
+      <div className="sigma-reason-question"><label>Jev question<select value={reasonType} onChange={(e) => setReasonType(e.target.value)}><option value="missing_relationship">Missing relationships</option><option value="supersession">Supersession</option><option value="temporal_status">Current vs historical</option><option value="evidence_alignment">Supporting vs conflicting</option></select></label><input value={reasonQuestion} onChange={(e) => setReasonQuestion(e.target.value)} /></div>
       <textarea value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Read-only Cypher query" />
-      <div className="sigma-filter-row"><span>Hide labels:</span>{allLabels.slice(0, 12).map((label) => <button key={label} className={hiddenLabels.includes(label) ? "active" : ""} onClick={() => toggle(hiddenLabels, label, setHiddenLabels)}>{label}</button>)}</div>
-      <div className="sigma-filter-row"><span>Hide relationships:</span>{allTypes.slice(0, 12).map((type) => <button key={type} className={hiddenTypes.includes(type) ? "active" : ""} onClick={() => toggle(hiddenTypes, type, setHiddenTypes)}>{type}</button>)}</div>
+      <div className="sigma-filter-row"><span>Hide labels:</span>{allLabels.slice(0, 12).map((label) => <button key={label} className={hiddenLabels.includes(label) ? "active" : ""} onClick={() => toggle(hiddenLabels, label, setHiddenLabels)}>{label}</button>)}</div><div className="sigma-filter-row"><span>Hide relationships:</span>{allTypes.slice(0, 12).map((type) => <button key={type} className={hiddenTypes.includes(type) ? "active" : ""} onClick={() => toggle(hiddenTypes, type, setHiddenTypes)}>{type}</button>)}</div>
     </div>
     <div className="sigma-status">{status}</div>
-    <div className="sigma-body"><div ref={containerRef} className="sigma-canvas" />
-      <aside className="sigma-inspector"><h3>Selected node</h3>{selected ? <><div className="sigma-node-title">{titleOf(selected)}</div><div className="sigma-muted">Neo4j id: {selected.id}</div><div className="sigma-labels">{selected.labels.map((label) => <span key={label}>{label}</span>)}</div><pre>{JSON.stringify(selected.properties, null, 2)}</pre><button onClick={expand}>Expand neighbors</button></> : <p className="sigma-muted">Click a node to inspect labels and real properties.</p>}</aside>
-    </div>
+    {reasoning && <section className="sigma-reasoning"><div><strong>Jev judgment</strong><span className="sigma-muted">bounded context: {String((reasoning.boundedContext as { nodeCount?: number })?.nodeCount || 0)} nodes · {String((reasoning.boundedContext as { relationshipCount?: number })?.relationshipCount || 0)} relationships</span><button className="sigma-save-button" onClick={saveReasoning} disabled={saveBusy}>{saveBusy ? "Saving…" : "Save result"}</button></div><pre>{JSON.stringify(reasoning.judgment, null, 2)}</pre>{Array.isArray(reasoning.evidence) && <><h4>Supporting evidence</h4><div className="sigma-evidence-list">{(reasoning.evidence as Array<{ id: string; title: string; excerpt: string }>).map((item) => <button key={item.id} onClick={() => focusResult({ id: item.id, kind: "source", labels: [], title: item.title, snippet: item.excerpt })}>{item.title}: {item.excerpt}</button>)}</div></>}{Array.isArray(reasoning.proposedRelationships) && (reasoning.proposedRelationships as Array<{ sourceId: string; targetId: string; type: string }>).length > 0 && <><h4>Provisional relationship suggestions</h4><p className="sigma-muted">Suggestions only. No graph write was performed.</p><pre>{JSON.stringify(reasoning.proposedRelationships, null, 2)}</pre></>}</section>}
+    {savedResults.length > 0 && <section className="sigma-saved-results"><strong>Saved results</strong><span className="sigma-muted">local SQLite · {savedResults.length}</span><div>{savedResults.slice(0, 8).map((result) => <article key={result.id}><strong>#{result.id} · {result.query}</strong><span>{result.scope} · {result.mode} · {new Date(result.createdAt).toLocaleString()}</span><small>{result.question}</small></article>)}</div></section>}
+    <div className="sigma-body"><div ref={containerRef} className="sigma-canvas" /><aside className="sigma-inspector"><h3>{selectedSource ? "Document / Source" : "Selected graph object"}</h3>{selected ? selectedSource ? <><div className="sigma-node-title">{selectedSource.title}</div><div className="sigma-source-path">{selectedSource.path}</div><div className="sigma-labels"><span>Document</span><span>{selectedSource.sourceType}</span></div><dl className="sigma-provenance"><dt>Origin</dt><dd>{selectedSource.originUri}</dd><dt>Created</dt><dd>{displayDate(selectedSource.created)}</dd><dt>Modified</dt><dd>{displayDate(selectedSource.modified)}</dd><dt>Ingested</dt><dd>{displayDate(selectedSource.ingested)}</dd></dl><h4>Contents</h4>{selectedSource.content ? <pre className="sigma-content">{selectedSource.content}</pre> : <p className="sigma-muted">No readable chunk text is available.</p>}<h4>Extracted from this document</h4><div className="sigma-semantic-list">{semanticNodes(selectedSource, nodesById).map((node) => <button key={node.id} onClick={() => focus(node)}>{labelOf(node)} · {titleOf(node)}</button>)}</div><div className="sigma-inspector-actions"><button onClick={expand}>Expand evidence</button><button onClick={() => setRawOpen((open) => !open)}>{rawOpen ? "Hide raw evidence" : "Show raw evidence"}</button></div>{rawOpen && <pre>{JSON.stringify(rawSourceProperties(selectedSource), null, 2)}</pre>}</> : <><div className="sigma-node-title">{titleOf(selected)}</div><div className="sigma-muted">{labelOf(selected)} · Neo4j id: {selected.id}</div><div className="sigma-labels">{selected.labels.map((label) => <span key={label}>{label}</span>)}</div><p className="sigma-muted">This semantic object is connected to source evidence when available.</p><button onClick={expand}>Expand neighbors</button>{rawOpen && <pre>{JSON.stringify(selected.properties, null, 2)}</pre>}<button onClick={() => setRawOpen((open) => !open)}>{rawOpen ? "Hide raw properties" : "Show raw properties"}</button></> : <p className="sigma-muted">Select a document/source to see provenance, readable contents, extracted objects, and evidence relationships.</p>}</aside></div>
   </div>;
 }

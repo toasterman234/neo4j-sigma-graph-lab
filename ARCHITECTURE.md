@@ -20,12 +20,14 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 
 1. The browser opens `/sigma-explorer`.
 2. `SigmaNeo4jExplorer` calls `/api/explorer/graph`, `/api/explorer/search`, or `/api/explorer/expand`.
-3. The route imports `frontend/lib/sigmaNeo4j.ts`, which is server-only in practice because it imports `node:path`, `dotenv`, and `neo4j-driver`.
-4. The adapter loads `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, and optional `NEO4J_DATABASE` from the existing environment.
-5. Graph queries run through a Neo4j read session. Custom Cypher is checked for mutation clauses.
-6. `graphology-neo4j` `cypherToGraph` converts result records containing Neo4j nodes and relationships into a Graphology graph.
-7. The adapter serializes nodes (`id`, labels, properties) and relationships (`id`, source, target, type).
-8. The browser builds a directed multi-graph and Sigma renders arrows, labels, filters, selection, and focus.
+3. Search requests use bounded scope/mode retrieval in `frontend/lib/sigmaNeo4j.ts`; they never send the full graph to the browser or Jev.
+4. The route imports `frontend/lib/sigmaNeo4j.ts`, which is server-only in practice because it imports `node:path`, `dotenv`, and `neo4j-driver`.
+5. The adapter loads `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, and optional `NEO4J_DATABASE` from the existing environment.
+6. Graph queries run through a Neo4j read session. Custom Cypher is checked for mutation clauses.
+7. `graphology-neo4j` `cypherToGraph` converts result records containing Neo4j nodes and relationships into a Graphology graph.
+8. The adapter serializes nodes (`id`, labels, properties) and relationships (`id`, source, target, type`).
+9. The browser groups Chunk nodes into logical Document/Source nodes in a presentation-only semantic adapter, then builds a directed multi-graph and Sigma renders arrows, labels, filters, selection, and focus.
+10. Whole-graph reasoning posts only the bounded search result context to `/api/jev/run`; `frontend/lib/jev.ts` further caps the Jev state to 24 nodes and 40 relationships before invoking the server-side Jev evaluator.
 
 ## Routes
 
@@ -34,8 +36,17 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 | `/sigma-explorer` | Bounded Sigma.js visual explorer |
 | `/modeling` | Modeling/architecture/schema tab |
 | `GET /api/explorer/graph` | Default bounded graph or custom read-only Cypher via `query` |
-| `GET /api/explorer/search` | Case-sensitive property substring search, bounded |
+| `GET /api/explorer/search` | Bounded whole/selected/neighborhood search across keyword, property, document, and relationship modes |
+| `POST /api/jev/run` | Retrieves a bounded search context server-side, then asks Jev typed questions; returns judgments, probabilities/confidence, evidence, and provisional relationship suggestions |
+| `GET /api/results` | Lists saved Jev result summaries from local SQLite |
+| `POST /api/results` | Saves one explicit Jev result and its bounded evidence to local SQLite |
 | `GET /api/explorer/expand` | Immediate neighbors for one Neo4j internal node id |
+
+## Document/Source presentation layer
+
+The API continues to return the underlying bounded node/relationship payload. Before rendering, `frontend/lib/documentSource.ts` groups Chunk nodes sharing a source URI/path into one logical `Document`/`Source` node. It derives a filename, relative path, source type, and explicit provenance dates, reconstructs readable content from ordered chunk text, and associates connected semantic nodes such as projects, decisions, systems, processes, services, and tasks.
+
+The inspector presents that semantic source view by default. Individual chunk properties remain available through the raw evidence toggle and expansion flow. Missing original creation metadata is shown as `Unknown`; S3 `LastModified` or ingestion values are not relabeled as document creation dates. This is browser-side presentation logic only and does not mutate Neo4j.
 
 ## Graph contract
 
@@ -57,6 +68,14 @@ type EdgePayload = {
 ```
 
 The default view is intentionally limited. The database has thousands of nodes, so the UI should remain focused and expand on demand rather than load the whole graph.
+
+## Whole-graph retrieval and Jev reasoning
+
+Search scopes are `whole`, `selected`, and `neighborhood`; modes are `keyword`, `property`, `document`, and `relationship`. Retrieval is capped at 80 results and 120 graph nodes. Search results are grouped into source/document, semantic node, and relationship results in the UI.
+
+`POST /api/jev/run` repeats the bounded retrieval server-side, selects only result-linked nodes, limits Jev input to 24 nodes and 40 relationships, truncates evidence excerpts, and includes an explicit untrusted-evidence policy. Jev returns typed judgments rather than prose. The application displays result excerpts and any candidate relationship as provisional. No endpoint in this feature mutates Neo4j.
+
+Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.data/graph-lab.sqlite` using SQLite. The database is local, ignored by Git, capped at 100 saved runs, and stores the query, search scope/mode, typed judgment, confidence, bounded evidence, and provisional suggestions. It does not store Neo4j credentials or write back to Neo4j.
 
 ## Read-only controls
 

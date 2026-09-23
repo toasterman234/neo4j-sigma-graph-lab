@@ -14,23 +14,58 @@ html, body { height: 100%; }
 .sigma-toolbar button, .sigma-controls button, .sigma-inspector button { border: 1px solid #475569; border-radius: 5px; background: #1e293b; color: #e2e8f0; padding: 6px 9px; cursor: pointer; }
 .sigma-toolbar button:disabled, .sigma-inspector button:disabled { opacity: .5; cursor: default; }
 .sigma-controls { position: relative; display: grid; gap: 8px; }
+.sigma-search-heading, .sigma-search-options, .sigma-reason-question { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sigma-search-heading { justify-content: space-between; }
+.sigma-search-options label, .sigma-reason-question label { display: flex; gap: 5px; align-items: center; color: #94a3b8; font-size: 12px; }
+.sigma-search-options select, .sigma-reason-question select { border: 1px solid #475569; border-radius: 5px; background: #020617; color: #e2e8f0; padding: 6px; }
+.sigma-search-options button { border: 1px solid #22d3ee; border-radius: 5px; background: #164e63; color: #cffafe; padding: 7px 10px; cursor: pointer; }
+.sigma-search-options button:disabled { opacity: .5; cursor: default; }
+.sigma-reason-question input { flex: 1; min-width: 240px; border: 1px solid #475569; border-radius: 5px; background: #020617; color: #e2e8f0; padding: 7px; }
+.sigma-search-results { position: absolute; z-index: 5; top: 112px; left: 16px; right: 16px; max-height: 360px; overflow: auto; background: #1e293b; border: 1px solid #475569; }
 .sigma-controls input, .sigma-controls textarea { width: 100%; border: 1px solid #475569; border-radius: 5px; background: #020617; color: #e2e8f0; padding: 8px; }
 .sigma-controls textarea { min-height: 62px; font: 12px ui-monospace, monospace; }
 .sigma-filter-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .sigma-filter-row span { color: #94a3b8; margin-right: 4px; }
 .sigma-filter-row button { font-size: 11px; padding: 3px 6px; }
 .sigma-filter-row button.active { background: #7f1d1d; border-color: #ef4444; }
-.sigma-search-results { position: absolute; z-index: 5; top: 45px; left: 16px; right: 16px; max-height: 220px; overflow: auto; background: #1e293b; border: 1px solid #475569; }
-.sigma-search-results button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #334155; border-radius: 0; }
+.sigma-search-results > div { padding: 4px 0; }
+.sigma-search-results h4 { margin: 5px 10px; color: #67e8f9; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.sigma-search-results h4 small { color: #94a3b8; }
+.sigma-search-results button { display: grid; gap: 2px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #334155; border-radius: 0; }
+.sigma-search-results button strong { color: #e2e8f0; }
+.sigma-search-results button span { overflow: hidden; color: #94a3b8; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .sigma-search-results small { color: #94a3b8; }
+.sigma-reasoning { display: grid; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #334155; background: #0c1a2e; }
+.sigma-reasoning > div { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.sigma-save-button { margin-left: auto; padding: 6px 9px; border: 1px solid #34d399; border-radius: 5px; background: #064e3b; color: #d1fae5; cursor: pointer; }
+.sigma-save-button:disabled { opacity: .5; cursor: default; }
+.sigma-saved-results { display: grid; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #334155; background: #111827; }
+.sigma-saved-results > span { margin-left: 8px; }
+.sigma-saved-results > div { display: flex; gap: 8px; overflow-x: auto; }
+.sigma-saved-results article { display: grid; gap: 3px; min-width: 220px; padding: 8px; border: 1px solid #334155; border-radius: 5px; background: #0f172a; }
+.sigma-saved-results article strong { color: #bae6fd; font-size: 12px; }
+.sigma-saved-results article span, .sigma-saved-results article small { color: #94a3b8; font-size: 11px; }
+.sigma-reasoning pre { max-height: 220px; overflow: auto; margin: 0; }
+.sigma-reasoning h4 { margin: 8px 0 0; font-size: 12px; }
+.sigma-evidence-list { display: grid; gap: 5px; }
+.sigma-evidence-list button { padding: 7px; border: 1px solid #334155; border-radius: 5px; background: #111827; color: #cbd5e1; text-align: left; cursor: pointer; font-size: 12px; }
 .sigma-status { padding: 7px 16px; color: #94a3b8; font-size: 12px; background: #020617; }
 .sigma-body { height: calc(100vh - 260px); min-height: 420px; display: flex; }
 .sigma-canvas { flex: 1; min-width: 0; }
 .sigma-inspector { width: 320px; overflow: auto; padding: 16px; border-left: 1px solid #334155; background: #111827; }
 .sigma-inspector h3 { margin-bottom: 12px; }
+.sigma-inspector h4 { margin: 18px 0 7px; color: #cbd5e1; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
 .sigma-node-title { font-weight: 700; margin-bottom: 3px; }
+.sigma-source-path { color: #67e8f9; font: 12px ui-monospace, monospace; overflow-wrap: anywhere; }
 .sigma-labels { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0; }
 .sigma-labels span { padding: 3px 6px; border-radius: 10px; background: #164e63; color: #a5f3fc; font-size: 11px; }
+.sigma-provenance { display: grid; grid-template-columns: 75px 1fr; gap: 6px 8px; font-size: 12px; }
+.sigma-provenance dt { color: #94a3b8; }
+.sigma-provenance dd { overflow-wrap: anywhere; }
+.sigma-content { max-height: 230px; overflow: auto; }
+.sigma-semantic-list { display: grid; gap: 5px; }
+.sigma-semantic-list button { border: 1px solid #334155; border-radius: 5px; padding: 6px 8px; text-align: left; background: #0f172a; color: #bae6fd; cursor: pointer; font-size: 12px; }
+.sigma-inspector-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0; }
 .sigma-inspector pre { white-space: pre-wrap; word-break: break-word; font: 11px/1.4 ui-monospace, monospace; color: #cbd5e1; background: #020617; border-radius: 5px; padding: 10px; margin-bottom: 12px; }
 
 .modeling-workspace { min-height: 100vh; color: #e2e8f0; background: #0f172a; font: 14px/1.5 system-ui, sans-serif; }

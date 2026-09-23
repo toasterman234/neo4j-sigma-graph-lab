@@ -1,6 +1,6 @@
 import path from "node:path";
 import dotenv from "dotenv";
-import neo4j, { type Driver, type Record as Neo4jRecord, type Node as Neo4jNode } from "neo4j-driver";
+import neo4j, { type Driver, type Integer, type Record as Neo4jRecord, type Node as Neo4jNode } from "neo4j-driver";
 import Graph from "graphology";
 import { cypherToGraph } from "graphology-neo4j";
 
@@ -79,6 +79,32 @@ export async function defaultGraph(limit = 300) {
   );
 }
 
+export type SearchScope = "selected" | "neighborhood" | "whole";
+export type SearchMode = "keyword" | "property" | "document" | "relationship";
+
+export type SearchResult = {
+  id: string;
+  kind: "node" | "relationship" | "source";
+  labels: string[];
+  title: string;
+  snippet: string;
+  properties?: Record<string, unknown>;
+  sourceNodeIds?: string[];
+};
+
+export type SearchResponse = {
+  query: string;
+  scope: SearchScope;
+  mode: SearchMode;
+  results: SearchResult[];
+  context: ReturnType<typeof graphToPayload>;
+  counts: { nodes: number; relationships: number; results: number };
+};
+
+const MAX_SEARCH_RESULTS = 80;
+const MAX_SEARCH_CONTEXT_NODES = 120;
+const MAX_SNIPPET = 420;
+
 async function readRecords(query: string, parameters: Record<string, unknown>) {
   assertReadOnly(query);
   const session = getDriver().session({ database: database(), defaultAccessMode: neo4j.session.READ });
@@ -97,6 +123,73 @@ function plain(value: unknown): unknown {
   return value;
 }
 
+function displayTitle(labels: string[], properties: Record<string, unknown>, id: string): string {
+  return String(properties.name ?? properties.title ?? properties.path ?? properties.sourceUrl ?? `${labels[0] || "Node"} ${id}`);
+}
+
+function displaySnippet(properties: Record<string, unknown>, query: string): string {
+  const raw = Object.entries(properties).map(([key, value]) => `${key}: ${plain(value)}`).join(" · ");
+  const match = raw.toLowerCase().indexOf(query.toLowerCase());
+  const start = match > 80 ? match - 80 : 0;
+  return raw.slice(start, start + MAX_SNIPPET);
+}
+
+function sourceUri(properties: Record<string, unknown>): string | undefined {
+  for (const key of ["metadata_x-amz-bedrock-kb-source-uri", "sourceUrl", "sourceUri", "path"]) {
+    const value = properties[key];
+    if (typeof value === "string" && value) return value;
+  }
+  const metadata = properties.metadata;
+  if (typeof metadata === "string") {
+    try { return sourceUri(JSON.parse(metadata)); } catch { /* unstructured metadata */ }
+  }
+  return undefined;
+}
+
+function nodeSearchResult(node: { id: string; labels: string[]; properties: Record<string, unknown> }, query: string): SearchResult {
+  const source = node.labels.includes("Chunk") || Boolean(sourceUri(node.properties)) || "text" in node.properties;
+  return {
+    id: node.id,
+    kind: source ? "source" : "node",
+    labels: node.labels,
+    title: displayTitle(node.labels, node.properties, node.id),
+    snippet: displaySnippet(node.properties, query),
+    properties: node.properties,
+  };
+}
+
+function selectedIds(ids: string[]): Integer[] {
+  return ids.slice(0, 20).map((id) => Number.parseInt(id, 10)).filter((id) => Number.isInteger(id) && id >= 0).map((id) => neo4j.int(id));
+}
+
+export async function searchGraph(query: string, scope: SearchScope = "whole", mode: SearchMode = "keyword", selectedNodeIds: string[] = [], limit = MAX_SEARCH_RESULTS): Promise<SearchResponse> {
+  const clean = query.trim();
+  const bounded = Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit)));
+  if (!clean) return { query: clean, scope, mode, results: [], context: { nodes: [], relationships: [], counts: { nodes: 0, relationships: 0 } }, counts: { nodes: 0, relationships: 0, results: 0 } };
+  const ids = selectedIds(selectedNodeIds);
+  const params: Record<string, unknown> = { q: clean, ids, limit: neo4j.int(MAX_SEARCH_CONTEXT_NODES) };
+  const nodePredicateFor = (variable: string) => mode === "document"
+    ? `(${variable}:Chunk OR any(k IN keys(${variable}) WHERE k IN ['metadata_x-amz-bedrock-kb-source-uri', 'sourceUrl', 'sourceUri', 'text'])) AND any(k IN keys(${variable}) WHERE toString(${variable}[k]) CONTAINS $q)`
+    : mode === "property"
+      ? `any(k IN keys(${variable}) WHERE k <> 'text' AND k <> 'metadata' AND toString(${variable}[k]) CONTAINS $q)`
+      : `any(k IN keys(${variable}) WHERE toString(${variable}[k]) CONTAINS $q)`;
+  let queryText: string;
+  if (mode === "relationship") {
+    const scopePredicate = ids.length && scope !== "whole" ? " AND (id(n) IN $ids OR id(m) IN $ids)" : "";
+    queryText = `MATCH (n)-[r]-(m) WHERE toUpper(type(r)) CONTAINS toUpper($q)${scopePredicate} RETURN n, r, m LIMIT $limit`;
+  } else if (scope === "neighborhood" && ids.length) {
+    queryText = `MATCH (n)-[r]-(m) WHERE id(n) IN $ids AND (${nodePredicateFor("n")} OR ${nodePredicateFor("m")}) RETURN n, r, m LIMIT $limit`;
+  } else {
+    const selectedPredicate = scope === "selected" && ids.length ? `id(n) IN $ids AND ` : "";
+    queryText = `MATCH (n)-[r]-(m) WHERE ${selectedPredicate}${nodePredicateFor("n")} RETURN n, r, m LIMIT $limit`;
+  }
+  const context = await graphFromCypher(queryText, params);
+  const nodeResults = context.nodes.slice(0, bounded).map((node) => nodeSearchResult(node as { id: string; labels: string[]; properties: Record<string, unknown> }, clean));
+  const relationshipResults = context.relationships.filter((edge) => mode === "relationship" || edge.type.toLowerCase().includes(clean.toLowerCase())).slice(0, bounded).map((edge) => ({ id: edge.id, kind: "relationship" as const, labels: [edge.type], title: edge.type, snippet: `${edge.source} ${edge.type} ${edge.target}`, sourceNodeIds: [edge.source, edge.target] }));
+  const unique = Array.from(new Map([...((mode === "relationship") ? relationshipResults : nodeResults), ...((mode === "relationship") ? nodeResults : relationshipResults)].map((result) => [`${result.kind}:${result.id}`, result])).values()).slice(0, bounded);
+  return { query: clean, scope, mode, results: unique, context, counts: { nodes: context.nodes.length, relationships: context.relationships.length, results: unique.length } };
+}
+
 export async function searchNodes(q: string, limit = 40) {
   const bounded = Math.max(1, Math.min(100, Math.floor(limit)));
   const records = await readRecords(
@@ -107,7 +200,7 @@ export async function searchNodes(q: string, limit = 40) {
   );
   return records.map((record: Neo4jRecord) => {
     const node = record.get("n") as Neo4jNode;
-    return { id: record.get("nodeId").toString(), labels: node.labels, properties: plain(node.properties) };
+    return { id: record.get("nodeId").toString(), labels: node.labels, properties: plain(node.properties) as Record<string, unknown> };
   });
 }
 

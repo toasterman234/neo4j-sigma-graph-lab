@@ -32,6 +32,11 @@ Thumbs.db
 *.log
 .tmp/
 
+# Local SQLite result store
+.data/
+*.sqlite
+*.sqlite-*
+
 # Generated fixture payloads that may contain local data
 data/documents/*.json
 data/documents/*.txt

@@ -6,3 +6,7 @@
 - Existing frontend uses Neo4j NVL, not Sigma.js/Graphology.
 - Explorer should be a separate route and component to avoid replacing current work.
 - Neo4j data must remain untouched; no seed/reset/write operations are allowed.
+- The explorer had no persistence for search or Jev results; only unrelated chat history uses sessionStorage.
+- Local `better-sqlite3` works with the current Node 26 runtime and Next.js Node route handlers.
+- Persistence verification succeeded across a server restart using `RESULTS_DB_PATH=/tmp/graph-lab-save-test.sqlite`; one saved Jev-shaped result was recovered after restart.
+- SQLite stores explicit saved Jev results only: query, scope/mode, bounded counts, judgment, confidence, evidence, and provisional suggestions. The local database is ignored by Git.
