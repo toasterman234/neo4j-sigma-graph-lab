@@ -18,3 +18,6 @@
 - Verified live custom query: 10 Project nodes.
 - Verified mutation query rejection: HTTP 400, `Only read-only Cypher is allowed`.
 - Backend tests: 4 passed. Frontend build and TypeScript checks passed.
+- Added the Modeling tab, shared Explorer/Modeling navigation, repository architecture docs, agent guide, continuation guide, and hardened `.gitignore`.
+- Initialized nested Git repository and created commit `e5a1f45` (`Initial Neo4j Sigma Graph Lab`).
+- GitHub remote creation and push remain pending.

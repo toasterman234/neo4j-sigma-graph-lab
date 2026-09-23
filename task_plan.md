@@ -22,14 +22,14 @@ Package a read-only Sigma.js/Graphology explorer for the existing ZimaOS Neo4j d
 ### Phase 4: Repository handoff
 - [x] Add repository-level README, AGENTS.md, ARCHITECTURE.md, and continuation guide.
 - [x] Harden `.gitignore` against secrets and generated artifacts.
-- [ ] Initialize nested Git repository and create initial commit.
+- [x] Initialize nested Git repository and create initial commit.
 - [ ] Create GitHub repository `neo4j-sigma-graph-lab` and push.
 
 ### Phase 5: Verification
-- [ ] Run frontend type check and production build.
-- [ ] Run backend tests.
-- [ ] Verify Modeling and Explorer routes.
-- [ ] Verify live graph/search/expansion/custom-query behavior and mutation rejection.
+- [x] Run frontend type check and production build.
+- [x] Run backend tests.
+- [x] Verify Modeling and Explorer routes.
+- [x] Verify live graph/search/expansion/custom-query behavior and mutation rejection.
 - [ ] Verify repository status and pushed remote.
 
 ## Decisions
