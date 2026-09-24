@@ -50,3 +50,24 @@ payloads only.
 - List: max 100 rows per request (UI pages 20)
 - Community graph: max 160 entity nodes, 2,000 edges
 - Detail: member entities capped at 60 in the payload
+
+## Views (2026-09-24)
+
+The `/communities` page has three tabs:
+
+- **Browse** — the original search/list + detail view.
+- **Hierarchy tree** — `frontend/app/api/msgraphrag/hierarchy/route.ts`
+  returns all 2,078 communities nested L3 → L0 via the parent
+  `IN_COMMUNITY` links (329 roots); `frontend/components/CommunityTree.tsx`
+  renders a collapsible tree with a title filter (matches show with
+  ancestors, auto-expanded). Tapping a title jumps to Browse and opens the
+  community detail.
+- **Type aggregate** — `frontend/app/api/msgraphrag/type-aggregate/route.ts`
+  returns the 15 canonical entity types with entity counts plus
+  type-pair relationship counts over `RELATIONSHIP|SUMMARIZED_RELATIONSHIP`
+  (undirected patterns match each relationship twice, so the query keeps
+  one row per relationship via `elementId(a) <= elementId(b)` — self-loops
+  included). `frontend/components/TypeGraph.tsx` renders a 15-node Sigma
+  graph: node size = entity count, edge width = relationship count, tap a
+  node for its top connections; a ranked table below lists entities/links
+  per type.

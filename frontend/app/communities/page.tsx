@@ -8,6 +8,10 @@ const CommunityGraph = dynamic(
   () => import("@/components/CommunityGraph").then((mod) => mod.CommunityGraph),
   { ssr: false },
 );
+const TypeGraph = dynamic(() => import("@/components/TypeGraph").then((mod) => mod.TypeGraph), {
+  ssr: false,
+});
+import { CommunityTree } from "@/components/CommunityTree";
 
 type CommunityListItem = {
   id: string;
@@ -58,6 +62,10 @@ const css = `
 .comm-pager button { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; }
 .comm-pager button:disabled { opacity: 0.4; cursor: default; }
 .comm-back { display: none; margin-bottom: 12px; padding: 7px 14px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; }
+.comm-viewtabs { display: flex; gap: 6px; padding: 12px 16px 0; }
+.comm-viewtab { padding: 7px 16px; border-radius: 8px 8px 0 0; border: 1px solid #1e293b; border-bottom: none; background: #020617; color: #94a3b8; font-size: 13px; cursor: pointer; }
+.comm-viewtab.on { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+.comm-wide-pane { padding: 16px 20px 40px; max-width: 1100px; }
 .comm-h1 { font-size: 20px; font-weight: 700; line-height: 1.3; }
 .comm-summary { font-size: 14px; line-height: 1.65; color: #cbd5e1; margin-top: 12px; }
 .comm-finding { padding: 10px 12px; border: 1px solid #1e293b; border-radius: 8px; margin-top: 8px; background: #020617; }
@@ -96,6 +104,7 @@ export default function CommunitiesPage() {
   const [detail, setDetail] = useState<CommunityDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [view, setView] = useState<"browse" | "tree" | "types">("browse");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -157,10 +166,50 @@ export default function CommunitiesPage() {
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const openFromTree = useCallback(
+    (id: string) => {
+      setView("browse");
+      selectCommunity(id);
+    },
+    [selectCommunity],
+  );
+
   return (
     <div className="comm-wrap">
       <style>{css}</style>
       <LabNav active="communities" />
+      <div className="comm-viewtabs">
+        {(
+          [
+            ["browse", "Browse"],
+            ["tree", "Hierarchy tree"],
+            ["types", "Type aggregate"],
+          ] as const
+        ).map(([v, label]) => (
+          <button key={v} className={`comm-viewtab${view === v ? " on" : ""}`} onClick={() => setView(v)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {view === "tree" && (
+        <div className="comm-wide-pane">
+          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Community hierarchy</div>
+          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
+            L3 roots at the top, drilling down to L0 · parent links from the MsGraphRAG Leiden run
+          </div>
+          <CommunityTree onSelect={openFromTree} selectedId={selectedId} />
+        </div>
+      )}
+      {view === "types" && (
+        <div className="comm-wide-pane">
+          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Entity type aggregate</div>
+          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
+            The 15 canonical entity types and how the corpus relationships run between them
+          </div>
+          <TypeGraph />
+        </div>
+      )}
+      {view === "browse" && (
       <div className={`comm-main${selectedId ? " has-sel" : ""}`}>
         <div className="comm-list-pane">
           <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Communities</div>
@@ -308,6 +357,7 @@ export default function CommunitiesPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
