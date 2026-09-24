@@ -47,3 +47,11 @@ curl -fsS 'http://localhost:3000/api/explorer/search?q=Process&limit=5'
 ```
 
 Report what was checked and what was not checked.
+
+## Knowledge graph doc (authoritative)
+
+`docs/KNOWLEDGE-GRAPH.md` is the single authoritative doc for the Neo4j graph:
+baseline vs projections, conventions, layer registry, semantic status, roadmap.
+When adding or changing a projection layer: add the registry row, follow the
+conventions in that doc, and refresh the census block with
+`node frontend/scripts/graph-census.cjs` before committing.
