@@ -330,3 +330,151 @@ export async function communityGraph(id: string, maxNodes = MAX_GRAPH_NODES): Pr
   ];
   return { nodes, relationships, counts: { nodes: nodes.length, relationships: relationships.length } };
 }
+
+export const CANONICAL_ENTITY_TYPES = [
+  "Project",
+  "System",
+  "Repository",
+  "Agent",
+  "Service",
+  "Decision",
+  "Artifact",
+  "Activity",
+  "Observation",
+  "Requirement",
+  "Event",
+  "Technology",
+  "Process",
+  "Person",
+  "Organization",
+] as const;
+
+export type HierarchyNode = {
+  id: string;
+  level: number;
+  title: string;
+  rating: number | null;
+  members: number;
+  hasSummary: boolean;
+  children: HierarchyNode[];
+};
+
+export type HierarchyResponse = {
+  roots: HierarchyNode[];
+  total: number;
+};
+
+type RawHierarchyNode = {
+  id: string;
+  level: number;
+  title: string;
+  rating: number | null;
+  members: number;
+  hasSummary: boolean;
+  parentId: string | null;
+  children: RawHierarchyNode[];
+};
+
+export async function getHierarchy(): Promise<HierarchyResponse> {
+  const rows = await readRecords(
+    `MATCH (c:__Community__)
+     OPTIONAL MATCH (c)-[:IN_COMMUNITY]->(p:__Community__)
+     OPTIONAL MATCH (e:__Entity__)-[:IN_COMMUNITY]->(c)
+     WITH c, p, count(DISTINCT e) AS members
+     RETURN c.id AS id, c.level AS level, c.title AS title, c.rating AS rating,
+            c.summary IS NOT NULL AS hasSummary, members,
+            p.id AS parentId`,
+  );
+  const byId = new Map<string, RawHierarchyNode>();
+  for (const r of rows) {
+    const id = String(r.id ?? "");
+    if (!id || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      level: Number(r.level ?? 0),
+      title: String(r.title ?? "Untitled community"),
+      rating: typeof r.rating === "number" ? r.rating : null,
+      members: Number(r.members ?? 0),
+      hasSummary: Boolean(r.hasSummary),
+      parentId: r.parentId == null ? null : String(r.parentId),
+      children: [],
+    });
+  }
+  const roots: RawHierarchyNode[] = [];
+  for (const node of byId.values()) {
+    const parent = node.parentId ? byId.get(node.parentId) : undefined;
+    if (parent && parent !== node) parent.children.push(node);
+    else roots.push(node);
+  }
+  const sortNodes = (a: RawHierarchyNode, b: RawHierarchyNode) =>
+    b.level - a.level ||
+    (b.rating ?? -1) - (a.rating ?? -1) ||
+    a.title.localeCompare(b.title);
+  const sortTree = (nodes: RawHierarchyNode[]) => {
+    nodes.sort(sortNodes);
+    for (const n of nodes) sortTree(n.children);
+  };
+  sortTree(roots);
+  const strip = (n: RawHierarchyNode): HierarchyNode => ({
+    id: n.id,
+    level: n.level,
+    title: n.title,
+    rating: n.rating,
+    members: n.members,
+    hasSummary: n.hasSummary,
+    children: n.children.map(strip),
+  });
+  return { roots: roots.map(strip), total: byId.size };
+}
+
+export type TypeAggregateResponse = {
+  types: { type: string; count: number }[];
+  edges: { t1: string; t2: string; count: number }[];
+  totalEntities: number;
+  totalRelationships: number;
+};
+
+export async function getTypeAggregate(): Promise<TypeAggregateResponse> {
+  const types = [...CANONICAL_ENTITY_TYPES];
+  const [countRows, totalRows, edgeRows] = await Promise.all([
+    readRecords(
+      `MATCH (e:__Entity__)
+       WITH e, [l IN labels(e) WHERE l <> '__Entity__'][0] AS t
+       WHERE t IN $types
+       RETURN t AS type, count(*) AS n`,
+      { types },
+    ),
+    readRecords(`MATCH (e:__Entity__) RETURN count(*) AS n`),
+    readRecords(
+      `MATCH (a:__Entity__)-[r:RELATIONSHIP|SUMMARIZED_RELATIONSHIP]-(b:__Entity__)
+       // Undirected patterns match each relationship twice (once per direction);
+       // elementId ordering keeps exactly one row per relationship, self-loops included.
+       WHERE elementId(a) <= elementId(b)
+       WITH a, b,
+            [l IN labels(a) WHERE l <> '__Entity__'][0] AS ta,
+            [l IN labels(b) WHERE l <> '__Entity__'][0] AS tb
+       WHERE ta IN $types AND tb IN $types
+       WITH CASE WHEN ta <= tb THEN ta ELSE tb END AS t1,
+            CASE WHEN ta <= tb THEN tb ELSE ta END AS t2,
+            count(*) AS n
+       RETURN t1, t2, n
+       ORDER BY n DESC`,
+      { types },
+    ),
+  ]);
+  const counted = new Map<string, number>();
+  for (const r of countRows) counted.set(String(r.type ?? ""), Number(r.n ?? 0));
+  const typeList = types.map((t) => ({ type: t, count: counted.get(t) ?? 0 }));
+  const edges = edgeRows.map((r) => ({
+    t1: String(r.t1 ?? ""),
+    t2: String(r.t2 ?? ""),
+    count: Number(r.n ?? 0),
+  }));
+  const totalRelationships = edges.reduce((sum, e) => sum + e.count, 0);
+  return {
+    types: typeList,
+    edges,
+    totalEntities: Number(totalRows[0]?.n ?? 0),
+    totalRelationships,
+  };
+}
