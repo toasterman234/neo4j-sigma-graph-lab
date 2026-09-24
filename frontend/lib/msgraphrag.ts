@@ -48,6 +48,13 @@ function plain(value: unknown): unknown {
   return value;
 }
 
+// Neo4j text properties are occasionally string arrays; normalize for display.
+function textOf(value: unknown, max: number): string {
+  const s = Array.isArray(value) ? value.map((v) => String(v)).join(" ") : String(value ?? "");
+  const clean = s.replace(/\s+/g, " ").trim();
+  return clean.length > max ? clean.slice(0, max) : clean;
+}
+
 function recordToObject(record: Neo4jRecord): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of record.keys as string[]) out[key] = plain(record.get(key));
@@ -118,7 +125,7 @@ export async function listCommunities(options: {
      OPTIONAL MATCH (e:__Entity__)-[:IN_COMMUNITY]->(c)
      WITH c, count(DISTINCT e) AS members
      RETURN c.id AS id, c.level AS level, c.title AS title, c.rating AS rating,
-            members, left(c.summary, 240) AS excerpt,
+            members, c.summary AS summary,
             c.summary IS NOT NULL AS hasSummary
      ORDER BY c.rating DESC, members DESC, c.title ASC
      SKIP $skip LIMIT $limit`,
@@ -131,7 +138,7 @@ export async function listCommunities(options: {
       title: String(r.title ?? "Untitled community"),
       rating: typeof r.rating === "number" ? r.rating : null,
       members: Number(r.members ?? 0),
-      excerpt: String(r.excerpt ?? ""),
+      excerpt: textOf(r.summary, 240),
       hasSummary: Boolean(r.hasSummary),
     })),
     total: Number(countRows[0]?.total ?? 0),
@@ -200,7 +207,7 @@ export async function getCommunity(id: string): Promise<CommunityDetail | null> 
             [x IN entities | {
               name: x.name,
               labels: labels(x),
-              description: left(x.description, 220)
+              description: x.description
             }] AS members`,
     { id },
   );
@@ -216,7 +223,7 @@ export async function getCommunity(id: string): Promise<CommunityDetail | null> 
       return {
         name: String(m.name),
         type,
-        description: typeof m.description === "string" ? m.description : "",
+        description: textOf(m.description, 220),
       };
     });
   const rawChildren = Array.isArray(row.children) ? (row.children as Record<string, unknown>[]) : [];
@@ -256,7 +263,7 @@ export async function communityGraph(id: string, maxNodes = MAX_GRAPH_NODES): Pr
   const memberRows = await readRecords(
     `MATCH (c:__Community__ {id: $id})<-[:IN_COMMUNITY]-(e:__Entity__)
      RETURN elementId(e) AS eid, e.name AS name, labels(e) AS labels,
-            left(e.description, 200) AS description
+            e.description AS description
      ORDER BY e.name ASC
      LIMIT $limit`,
     { id, limit: neo4j.int(bounded) },
@@ -299,7 +306,7 @@ export async function communityGraph(id: string, maxNodes = MAX_GRAPH_NODES): Pr
           title: String(r.name ?? "Unnamed"),
           kind: type,
           type,
-          description: typeof r.description === "string" ? r.description : "",
+          description: textOf(r.description, 200),
         },
       };
     }),
