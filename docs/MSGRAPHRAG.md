@@ -31,7 +31,9 @@ payloads only.
 ## Code
 
 - `frontend/lib/msgraphrag.ts` — second driver + read-only query helpers.
-  All Cypher passes a read-only assertion; sessions are READ; 15s timeout.
+  All Cypher passes a read-only assertion; sessions are READ; 15s timeout;
+  one retry on transient failure (the Mac → ZimaOS Bolt connection can go
+  stale when idle).
 - `frontend/app/api/msgraphrag/communities/route.ts` — `GET ?q&level&limit&offset&summarized=1`
 - `frontend/app/api/msgraphrag/communities/[id]/route.ts` — full detail
   (summary, parsed findings, parent/children, member entities)

@@ -56,13 +56,21 @@ function recordToObject(record: Neo4jRecord): Record<string, unknown> {
 
 async function readRecords(query: string, parameters: Record<string, unknown> = {}) {
   assertMsgraphragReadOnly(query);
-  const session = getMsgraphragDriver().session({ defaultAccessMode: neo4j.session.READ });
-  try {
-    const result = await session.run(query, parameters, { timeout: QUERY_TIMEOUT_MS });
-    return result.records.map(recordToObject);
-  } finally {
-    await session.close();
+  // Retry once: the Mac -> ZimaOS Bolt connection can go stale when idle, so
+  // the first query after a quiet period may fail on a dead pooled connection.
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const session = getMsgraphragDriver().session({ defaultAccessMode: neo4j.session.READ });
+    try {
+      const result = await session.run(query, parameters, { timeout: QUERY_TIMEOUT_MS });
+      return result.records.map(recordToObject);
+    } catch (error) {
+      lastError = error;
+    } finally {
+      await session.close();
+    }
   }
+  throw lastError instanceof Error ? lastError : new Error("Unable to query MsGraphRAG Neo4j");
 }
 
 export type CommunityListItem = {
