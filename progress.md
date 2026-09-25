@@ -123,3 +123,18 @@
 - Added `frontend/scripts/verify-question-router.cjs` and `npm run test:router` covering the six-signal contract, decision routing, technology automation/eval routing, research routing, named-entity deferral, signal extraction, trigger reasons, and the four-follow-up cap.
 - Verification run `36104781462` passed: catalog contract ✓, router contract ✓, strict TypeScript ✓, Next.js production build ✓, backend tests ✓.
 - Neo4j remains read-only. No semantic/vector retrieval, external enrichment, generalized proposal kinds, batch routing across many sources, or canonical promotion/write path was added.
+
+
+## 2026-09-25 — Issue #4 semantic / hybrid retrieval
+- Continued Issue #4 from merged router baseline `ad54871` on `work/semantic-hybrid-retrieval` / PR #7.
+- Reused the repository's existing Neo4j vector infrastructure instead of adding a new embedding provider. The backend already defines `entity_embeddings` over `Entity.embedding`; the Explorer now capability-detects that configured online index with read-only `SHOW INDEXES`.
+- Added selected-item semantic seeds: up to three indexed entities reachable within two hops of the selected source/node can supply their existing embeddings directly to `db.index.vector.queryNodes`.
+- Nearest entities are expanded back to bounded graph/source evidence and merged ahead of the existing lexical results. Hybrid merge is semantic-first, de-duplicates by result identity, and remains bounded.
+- Manual selected GRAPH questions and routed GRAPH follow-ups now use `hybridSearchGraph`; router graph follow-ups continue to share one bounded retrieval.
+- Added explicit retrieval provenance: `hybrid`, `lexical`, or `lexical_fallback`, plus vector index/label/property, seed count, semantic candidate count, and fallback reason. Jev source context and the Explorer expose this provenance.
+- No vector/index mutation was added to the frontend path. If the configured vector index is missing/offline, no reachable embedded entity exists, or the vector query fails, current lexical retrieval is preserved rather than failing the judgment.
+- Added `frontend/lib/semanticHybrid.ts` plus `frontend/scripts/verify-semantic-retrieval.cjs` and `npm run test:semantic`.
+- CI caught and fixed two issues before merge: the first hybrid merge implementation allowed a later lexical duplicate to overwrite a semantic result; the semantic contract exposed this and the merge was changed to semantic-first first-win. Strict TypeScript then exposed an invalid type predicate in the semantic result pipeline; it was replaced with an explicit typed `flatMap`.
+- Verification run `36106415028` passed: catalog contract ✓, router contract ✓, semantic retrieval contract ✓, strict TypeScript ✓, Next.js production build ✓, backend tests ✓.
+- Live ZimaOS `entity_embeddings` availability/population was not verified in this pass and is not claimed. Runtime fallback metadata makes that limitation visible instead of silent.
+- Still deferred under Issue #4: deterministic extraction/enrichment, routing across multiple sources, generalized proposal kinds, longitudinal/GitGraph UI, and the separately governed canonical promotion/write path.
