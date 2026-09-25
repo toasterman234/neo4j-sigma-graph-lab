@@ -110,7 +110,24 @@ Saved Jev results retain question id/version/group/mode, source context, and an 
 
 The route reuses the selected-item context for ITEM follow-ups. If any triggered question needs GRAPH mode, it performs at most one bounded graph retrieval and reuses that context for all graph follow-ups. A user-entered graph query is used when present; otherwise the selected source/object title is the retrieval fallback. Individual follow-up failures are returned as errors without discarding successful siblings.
 
-Named-entity presence is currently surfaced as a deferred signal rather than triggering unsupported extraction/enrichment. This phase also does **not** add semantic/vector candidate retrieval, routing across many selected sources, generalized proposal kinds, external enrichment, or a canonical Neo4j publish path. Those remain separate phases under Issue #4.
+Named-entity presence is currently surfaced as a deferred signal rather than triggering unsupported extraction/enrichment. Routing across many selected sources, generalized proposal kinds, external enrichment, and a canonical Neo4j publish path remain separate phases under Issue #4.
+
+### Semantic / hybrid graph retrieval
+
+Selected GRAPH judgments now use `hybridSearchGraph` in `frontend/lib/sigmaNeo4j.ts`. The path is capability-aware and read-only:
+
+1. Run the existing lexical retrieval as a guaranteed baseline.
+2. Use `SHOW INDEXES` to check only the configured online vector index (`NEO4J_VECTOR_INDEX`, default `entity_embeddings`).
+3. From the selected source/node ids, search up to two graph hops for at most three nodes carrying the vector index's label/property. The repo's existing backend defines `entity_embeddings` over `Entity.embedding`.
+4. Use those existing embeddings directly with `db.index.vector.queryNodes`; the Explorer does not call a new embedding provider.
+5. Expand nearest entity candidates back to bounded neighboring source/relationship evidence.
+6. Merge semantic results ahead of lexical results, de-duplicate by result identity, cap the combined set, and pass that evidence to Jev.
+
+Semantic retrieval never creates or rebuilds an index. If the configured index is missing/offline, no reachable indexed entity carries an embedding, or the vector procedure fails, the request returns the lexical baseline with `retrieval.strategy = lexical_fallback` and an explicit `fallbackReason`. Successful hybrid runs record the index name, indexed label/property, seed count, semantic candidate count, and semantic scores on semantic results.
+
+Manual GRAPH questions use hybrid retrieval when a selected item exists. Automatic router GRAPH follow-ups reuse one hybrid retrieval for all graph follow-ups. Retrieval provenance is copied into each Jev result's source context and shown in the Explorer so saved judgments retain whether they were hybrid or lexical fallback.
+
+This phase reuses the existing vector infrastructure already present in `backend/app/vector_client.py`; it does not prove that `entity_embeddings` is currently online or populated in the deployed ZimaOS database. Live vector availability is a deployment/runtime verification concern, while lexical fallback preserves current behavior when unavailable.
 
 ## Proposed schema modeling
 
