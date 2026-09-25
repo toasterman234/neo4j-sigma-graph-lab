@@ -104,6 +104,7 @@ export type SearchResponse = {
 
 const MAX_SEARCH_RESULTS = 80;
 const MAX_SEARCH_CONTEXT_NODES = 120;
+const MAX_JEV_ITEM_RESULTS = 24;
 const MAX_SNIPPET = 420;
 
 async function readRecords(query: string, parameters: Record<string, unknown>) {
@@ -206,6 +207,46 @@ export async function searchGraph(query: string, scope: SearchScope = "whole", m
   });
   const unique = Array.from(new Map([...((mode === "relationship") ? relationshipResults : nodeResults), ...((mode === "relationship") ? nodeResults : relationshipResults)].map((result) => [`${result.kind}:${result.id}`, result])).values()).slice(0, bounded);
   return { query: clean, scope, mode, results: unique, context, counts: { nodes: context.nodes.length, relationships: context.relationships.length, results: unique.length } };
+}
+
+
+export async function selectedItemContext(selectedNodeIds: string[], query = "selected item", limit = MAX_JEV_ITEM_RESULTS): Promise<SearchResponse> {
+  const ids = selectedIds(selectedNodeIds);
+  const clean = query.trim() || "selected item";
+  const bounded = Math.max(1, Math.min(MAX_JEV_ITEM_RESULTS, Math.floor(limit)));
+
+  if (!ids.length) {
+    return {
+      query: clean,
+      scope: "selected",
+      mode: "document",
+      results: [],
+      context: { nodes: [], relationships: [], counts: { nodes: 0, relationships: 0 } },
+      counts: { nodes: 0, relationships: 0, results: 0 },
+    };
+  }
+
+  const context = await graphFromCypher(
+    `MATCH (n)
+     WHERE id(n) IN $ids
+     RETURN n
+     LIMIT $limit`,
+    { ids, limit: neo4j.int(bounded) },
+  );
+
+  const results = context.nodes
+    .slice(0, bounded)
+    .map((node) => nodeSearchResult(node as { id: string; labels: string[]; properties: Record<string, unknown> }, clean))
+    .filter((result): result is SearchResult => Boolean(result));
+
+  return {
+    query: clean,
+    scope: "selected",
+    mode: "document",
+    results,
+    context,
+    counts: { nodes: context.nodes.length, relationships: 0, results: results.length },
+  };
 }
 
 export async function searchNodes(q: string, limit = 40) {
