@@ -37,7 +37,8 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 | `/modeling` | Modeling/architecture/schema tab |
 | `GET /api/explorer/graph` | Default bounded graph or custom read-only Cypher via `query` |
 | `GET /api/explorer/search` | Bounded whole/selected/neighborhood search across keyword, property, document, and relationship modes |
-| `POST /api/jev/run` | Resolves a versioned Question Catalog entry, obtains ITEM or GRAPH context server-side, then returns typed Jev judgments, confidence, evidence, source context, and provisional relationship suggestions |
+| `POST /api/jev/run` | Resolves one versioned Question Catalog entry, obtains ITEM or GRAPH context server-side, then returns typed Jev judgments, confidence, evidence, source context, and provisional relationship suggestions |
+| `POST /api/jev/route` | Runs one six-signal ITEM router pass for the selected object, deterministically plans up to four follow-ups, reuses at most one bounded graph retrieval, and returns routed judgments with trigger reasons |
 | `GET /api/results` | Lists saved Jev result summaries from local SQLite |
 | `POST /api/results` | Saves one explicit Jev result and its bounded evidence to local SQLite |
 | `GET /api/explorer/expand` | Immediate neighbors for one Neo4j internal node id |
@@ -99,9 +100,17 @@ The initial catalog includes the existing missing-relationship, supersession, te
 
 `frontend/lib/questions/runner.ts` compiles a catalog definition into Jev questions, builds the bounded evidence state, applies the untrusted-evidence policy, invokes the generic `frontend/lib/jev.ts` adapter, and returns `questionMeta` and `sourceContext` with every result. Relationship proposals remain provisional and are only produced for catalog entries whose proposal policy explicitly allows them.
 
-Saved Jev results retain question id/version/group/mode and source context in additive SQLite columns. Existing rows remain readable through legacy fallbacks. A catalog contract check in `frontend/scripts/verify-question-catalog.cjs` validates unique ids/versions, the required initial question set, ITEM/GRAPH routing expectations, and proposal-policy boundaries.
+Saved Jev results retain question id/version/group/mode, source context, and an optional router trace in additive SQLite columns. Existing rows remain readable through legacy fallbacks. A catalog contract check in `frontend/scripts/verify-question-catalog.cjs` validates unique ids/versions, the required initial question set, ITEM/GRAPH routing expectations, and proposal-policy boundaries.
 
-This phase does **not** add batch routing, semantic/vector candidate retrieval, generalized proposal kinds, external enrichment, or a canonical Neo4j publish path. Those remain separate phases under Issue #4.
+### Automatic router
+
+`frontend/lib/questions/router.ts` runs one combined Jev pass over six router-only ITEM questions: object type, topics, intent, named-entity presence, actionability, and prior-knowledge dependency. Router-only definitions remain in the catalog for versioning/testability but are hidden from the manual question selector.
+
+`frontend/lib/questions/routerPlan.ts` is deterministic and provider-independent. It converts the six signals into an explainable follow-up plan, deduplicates triggers, assigns priorities, and enforces a hard cap of four follow-ups. Current rules can trigger `related_prior_knowledge`, `supersession`, `temporal_status`, `research_candidate`, `automation_candidate`, and `eval_candidate`. Every routed result receives a `routing` trace containing router version, base question ids, trigger reasons, and the router signal snapshot.
+
+The route reuses the selected-item context for ITEM follow-ups. If any triggered question needs GRAPH mode, it performs at most one bounded graph retrieval and reuses that context for all graph follow-ups. A user-entered graph query is used when present; otherwise the selected source/object title is the retrieval fallback. Individual follow-up failures are returned as errors without discarding successful siblings.
+
+Named-entity presence is currently surfaced as a deferred signal rather than triggering unsupported extraction/enrichment. This phase also does **not** add semantic/vector candidate retrieval, routing across many selected sources, generalized proposal kinds, external enrichment, or a canonical Neo4j publish path. Those remain separate phases under Issue #4.
 
 ## Proposed schema modeling
 
