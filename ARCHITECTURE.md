@@ -27,7 +27,7 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 7. `graphology-neo4j` `cypherToGraph` converts result records containing Neo4j nodes and relationships into a Graphology graph.
 8. The adapter serializes nodes (`id`, labels, properties) and relationships (`id`, source, target, type`).
 9. The browser groups Chunk nodes into logical Document/Source nodes in a presentation-only semantic adapter, then builds a directed multi-graph and Sigma renders arrows, labels, filters, selection, and focus.
-10. Whole-graph reasoning posts only the bounded search result context to `/api/jev/run`; `frontend/lib/jev.ts` further caps the Jev state to 24 nodes and 40 relationships before invoking the server-side Jev evaluator.
+10. Jev reasoning posts a catalog question id plus bounded context to `/api/jev/run`. ITEM questions read only the selected node/chunks through `selectedItemContext`; GRAPH questions use the existing bounded search pipeline. `frontend/lib/questions/runner.ts` caps Jev state to 24 nodes and 40 relationships before invoking the generic server-side adapter in `frontend/lib/jev.ts`.
 
 ## Routes
 
@@ -37,7 +37,7 @@ The original generated Context Graph backend remains in `backend/`. The Sigma ex
 | `/modeling` | Modeling/architecture/schema tab |
 | `GET /api/explorer/graph` | Default bounded graph or custom read-only Cypher via `query` |
 | `GET /api/explorer/search` | Bounded whole/selected/neighborhood search across keyword, property, document, and relationship modes |
-| `POST /api/jev/run` | Retrieves a bounded search context server-side, then asks Jev typed questions; returns judgments, probabilities/confidence, evidence, and provisional relationship suggestions |
+| `POST /api/jev/run` | Resolves a versioned Question Catalog entry, obtains ITEM or GRAPH context server-side, then returns typed Jev judgments, confidence, evidence, source context, and provisional relationship suggestions |
 | `GET /api/results` | Lists saved Jev result summaries from local SQLite |
 | `POST /api/results` | Saves one explicit Jev result and its bounded evidence to local SQLite |
 | `GET /api/explorer/expand` | Immediate neighbors for one Neo4j internal node id |
@@ -84,7 +84,24 @@ The explorer presents Jev output as typed answer cards rather than raw JSON: `no
 
 `POST /api/jev/run` repeats the bounded retrieval server-side, selects only result-linked nodes, limits Jev input to 24 nodes and 40 relationships, truncates evidence excerpts, and includes an explicit untrusted-evidence policy. Jev returns typed judgments rather than prose. The application displays result excerpts and any candidate relationship as provisional. No endpoint in this feature mutates Neo4j.
 
-Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.data/graph-lab.sqlite` using SQLite. The database is local, ignored by Git, capped at 100 saved runs, and stores the query, search scope/mode, typed judgment, confidence, bounded evidence, and provisional suggestions. It does not store Neo4j credentials or write back to Neo4j.
+Explicitly saved Jev results are stored by `frontend/lib/resultStore.ts` in `.data/graph-lab.sqlite` using SQLite. The database is local, ignored by Git, capped at 100 saved runs, and stores the query, search scope/mode, versioned question metadata, selected/source context, typed judgment, confidence, bounded evidence, and provisional suggestions. The schema upgrade is additive and preserves legacy saved rows. It does not store Neo4j credentials or write back to Neo4j.
+
+## Question Catalog and routed Jev reasoning
+
+Question definitions live in `frontend/lib/questions/catalog.ts` and are versioned data rather than a fixed union inside the Jev adapter. Each definition declares an id, title, group, execution mode, output contract, evidence requirement, and optional proposal policy. The initial implemented modes are:
+
+- **ITEM** — classify or judge only the currently selected document/source/node. The route resolves the selected logical document to its underlying Neo4j chunk ids and fetches only those nodes; it does not perform whole-graph retrieval.
+- **GRAPH** — retrieve bounded candidates using the existing whole/selected/neighborhood scopes and keyword/property/document/relationship modes before asking Jev to compare or judge them.
+
+`extraction`, `enrichment`, and `reflection` are reserved catalog modes but are intentionally rejected by the route until their own execution policies are implemented.
+
+The initial catalog includes the existing missing-relationship, supersession, temporal-status, and evidence-alignment judgments plus object type, topic classification, actionability, related prior knowledge, automation candidate, eval candidate, and research candidate. Multi-label topic classification is compiled into independent typed boolean judgments; choice and boolean questions keep their native Jev output types.
+
+`frontend/lib/questions/runner.ts` compiles a catalog definition into Jev questions, builds the bounded evidence state, applies the untrusted-evidence policy, invokes the generic `frontend/lib/jev.ts` adapter, and returns `questionMeta` and `sourceContext` with every result. Relationship proposals remain provisional and are only produced for catalog entries whose proposal policy explicitly allows them.
+
+Saved Jev results retain question id/version/group/mode and source context in additive SQLite columns. Existing rows remain readable through legacy fallbacks. A catalog contract check in `frontend/scripts/verify-question-catalog.cjs` validates unique ids/versions, the required initial question set, ITEM/GRAPH routing expectations, and proposal-policy boundaries.
+
+This phase does **not** add batch routing, semantic/vector candidate retrieval, generalized proposal kinds, external enrichment, or a canonical Neo4j publish path. Those remain separate phases under Issue #4.
 
 ## Proposed schema modeling
 
