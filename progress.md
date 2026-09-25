@@ -109,3 +109,17 @@
 - Governed Mac bridge execution itself reported healthy on run `36101510486`, but its result-artifact upload failed because GitHub Actions artifact storage quota is exhausted. This control-plane defect is tracked as `github-workflows-control-plane#36`.
 - No existing `neo4j-sigma-graph-lab` clone was found in the governed Mac home/codex-scratch workspaces, so branch-specific live ZimaOS Neo4j/browser verification was not performed. The live mutation-rejection/read-only behavior for this branch therefore remains **unverified**, rather than being inferred from earlier main-branch checks.
 - Deferred exactly as scoped in Issue #4: router/batch execution, generalized proposal kinds, semantic/vector candidate retrieval, extraction/enrichment execution modes, GitGraph-style longitudinal UI, and any canonical promotion/write gate.
+
+
+## 2026-09-25 — Issue #4 automatic question router
+- Continued Issue #4 from merged Question Catalog baseline `897147f` on `work/question-router-followups` / PR #6.
+- Added three router-only catalog signals for intent, named-entity presence, and prior-knowledge dependency. Together with object type, topic classification, and actionability, the router now evaluates the six-signal contract from Issue #4 in one combined Jev call.
+- Added `frontend/lib/questions/routerPlan.ts` with deterministic, explainable routing rules and a hard cap of four follow-ups. Trigger reasons are preserved and deduplicated.
+- Added `frontend/lib/questions/router.ts` and `POST /api/jev/route`. ITEM follow-ups reuse selected-item evidence; GRAPH follow-ups reuse at most one bounded graph retrieval. Individual follow-up failures do not discard successful siblings.
+- Current automatic follow-ups can include related-prior-knowledge, supersession, temporal-status, research-candidate, automation-candidate, and eval-candidate judgments.
+- Named-entity presence is intentionally surfaced as deferred until deterministic extraction/enrichment is implemented; the router does not invent external person/org facts.
+- Added routing trace metadata to `JevRunResponse` and additive SQLite `routing_json` persistence. Saved routed follow-ups retain router version, base question ids, signal snapshot, and exact trigger reasons.
+- Updated the Sigma explorer with **Auto-route selected**, a router signal summary, one bounded graph-retrieval summary, automatic follow-up cards, deferred-signal display, and routed-result inspection/saving.
+- Added `frontend/scripts/verify-question-router.cjs` and `npm run test:router` covering the six-signal contract, decision routing, technology automation/eval routing, research routing, named-entity deferral, signal extraction, trigger reasons, and the four-follow-up cap.
+- Verification run `36104781462` passed: catalog contract ✓, router contract ✓, strict TypeScript ✓, Next.js production build ✓, backend tests ✓.
+- Neo4j remains read-only. No semantic/vector retrieval, external enrichment, generalized proposal kinds, batch routing across many sources, or canonical promotion/write path was added.
