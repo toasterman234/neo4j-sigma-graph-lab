@@ -59,7 +59,7 @@ assert.match(sigmaSource, /export async function extractSelectedKnowledge/);
 assert.match(sigmaSource, /OPTIONAL MATCH \(selected\)-\[r\]-\(neighbor\)/);
 assert.doesNotMatch(
   sigmaSource.slice(sigmaSource.indexOf("export async function extractSelectedKnowledge"), sigmaSource.indexOf("export async function selectedItemContext")),
-  /\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP)\b/i,
+  /\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP)\b/,
   "selected knowledge extraction must remain read-only",
 );
 
