@@ -49,4 +49,4 @@ jobs:
 
       - name: Backend tests
         working-directory: backend
-        run: uv run python -m pytest tests/ -q
+        run: uv run --extra dev python -m pytest tests/ -q
