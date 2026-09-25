@@ -12,11 +12,19 @@ export function mergeHybridResults<T extends HybridResult>(
   limit: number,
 ): T[] {
   const bounded = Math.max(1, Math.floor(limit));
-  const combined = [
-    ...semantic.map((result) => ({ ...result, retrieval: "semantic" as const })),
-    ...lexical.map((result) => ({ ...result, retrieval: result.retrieval || "lexical" as const })),
-  ];
-  return Array.from(
-    new Map(combined.map((result) => [`${result.kind}:${result.id}`, result])).values(),
-  ).slice(0, bounded) as T[];
+  const seen = new Set<string>();
+  const merged: T[] = [];
+
+  for (const result of [
+    ...semantic.map((item) => ({ ...item, retrieval: "semantic" as const })),
+    ...lexical.map((item) => ({ ...item, retrieval: item.retrieval || "lexical" as const })),
+  ]) {
+    const key = `${result.kind}:${result.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(result as T);
+    if (merged.length >= bounded) break;
+  }
+
+  return merged;
 }
