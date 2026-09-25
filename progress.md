@@ -93,3 +93,19 @@
 - Verified current proposal API returns human labels only, with no `Entity`, `Chunk`, or `DocumentId` titles/labels and no duplicated concept-type prefix.
 - Verified frontend typecheck and production build passed; `/modeling` returned HTTP 200.
 - Browser-level click verification remains outstanding; `npm run lint` remains blocked because the repository has no ESLint 9 flat config.
+
+
+## 2026-09-25 — Issue #4 Question Catalog first slice
+- Started from authoritative Issue #4 and current `main` at `a207e2c`; implementation remained on `work/question-catalog-jev` and draft PR #5.
+- Replaced the fixed question definitions in `frontend/lib/jev.ts` with a generic server-only Jev evaluator and added the versioned catalog in `frontend/lib/questions/catalog.ts`.
+- Added `frontend/lib/questions/runner.ts` with explicit ITEM versus GRAPH execution. ITEM questions retrieve only the selected node/chunks; GRAPH questions keep the existing bounded Neo4j retrieval path. Jev state remains capped at 24 nodes / 40 relationships.
+- Added the initial usable catalog: object type, topic classification, actionability, related prior knowledge, supersession, automation candidate, eval candidate, research candidate, plus the pre-existing missing-relationship, temporal-status, and evidence-alignment judgments.
+- Preserved the existing Modeling proposal path through a compatibility wrapper; relationship suggestions remain provisional and no canonical Neo4j write path was added.
+- Extended saved-result SQLite rows with additive `question_meta_json` and `source_context_json` fields, including legacy fallbacks for existing records.
+- Updated the Sigma explorer with a Question Catalog selector. ITEM questions can run from a selected source/node without a graph search query; GRAPH questions still require bounded retrieval.
+- Added `frontend/scripts/verify-question-catalog.cjs` and `npm run test:catalog` to validate catalog ids/versions, required initial questions, ITEM/GRAPH routing, and proposal-policy boundaries.
+- Verification run `36102119311` passed: question catalog contract ✓, strict TypeScript ✓, Next.js production build ✓, backend tests ✓ using the declared `dev` extra.
+- The first CI attempt exposed only a verifier setup mistake: `pytest` is an optional backend `dev` dependency. The verifier was corrected to use `uv run --extra dev python -m pytest tests/ -q`; no backend dependency change was made.
+- Governed Mac bridge execution itself reported healthy on run `36101510486`, but its result-artifact upload failed because GitHub Actions artifact storage quota is exhausted. This control-plane defect is tracked as `github-workflows-control-plane#36`.
+- No existing `neo4j-sigma-graph-lab` clone was found in the governed Mac home/codex-scratch workspaces, so branch-specific live ZimaOS Neo4j/browser verification was not performed. The live mutation-rejection/read-only behavior for this branch therefore remains **unverified**, rather than being inferred from earlier main-branch checks.
+- Deferred exactly as scoped in Issue #4: router/batch execution, generalized proposal kinds, semantic/vector candidate retrieval, extraction/enrichment execution modes, GitGraph-style longitudinal UI, and any canonical promotion/write gate.
