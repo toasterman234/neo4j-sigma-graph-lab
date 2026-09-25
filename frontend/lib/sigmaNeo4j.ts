@@ -422,6 +422,12 @@ export async function hybridSearchGraph(query: string, scope: SearchScope = "who
   };
 }
 
+// Neo4j toString() throws on list values (several node properties are string
+// arrays), so normalize each property to a list of scalars before matching.
+// `x + [] = x` is true only for lists (verified against the live graph 2026-09-25).
+const propContains = (expr: string) =>
+  `any(v IN CASE WHEN ${expr} IS NULL THEN [] WHEN ${expr} + [] = ${expr} THEN ${expr} ELSE [${expr}] END WHERE toString(v) CONTAINS $q)`;
+
 export async function searchGraph(query: string, scope: SearchScope = "whole", mode: SearchMode = "keyword", selectedNodeIds: string[] = [], limit = MAX_SEARCH_RESULTS): Promise<SearchResponse> {
   const clean = query.trim();
   const bounded = Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit)));
@@ -429,10 +435,10 @@ export async function searchGraph(query: string, scope: SearchScope = "whole", m
   const ids = selectedIds(selectedNodeIds);
   const params: Record<string, unknown> = { q: clean, ids, limit: neo4j.int(MAX_SEARCH_CONTEXT_NODES) };
   const nodePredicateFor = (variable: string) => mode === "document"
-    ? `(${variable}:Chunk OR any(k IN keys(${variable}) WHERE k IN ['metadata_x-amz-bedrock-kb-source-uri', 'sourceUrl', 'sourceUri', 'text'])) AND any(k IN keys(${variable}) WHERE toString(${variable}[k]) CONTAINS $q)`
+    ? `(${variable}:Chunk OR any(k IN keys(${variable}) WHERE k IN ['metadata_x-amz-bedrock-kb-source-uri', 'sourceUrl', 'sourceUri', 'text'])) AND any(k IN keys(${variable}) WHERE ${propContains(`${variable}[k]`)})`
     : mode === "property"
-      ? `any(k IN keys(${variable}) WHERE k <> 'text' AND k <> 'metadata' AND toString(${variable}[k]) CONTAINS $q)`
-      : `any(k IN keys(${variable}) WHERE toString(${variable}[k]) CONTAINS $q)`;
+      ? `any(k IN keys(${variable}) WHERE k <> 'text' AND k <> 'metadata' AND ${propContains(`${variable}[k]`)})`
+      : `any(k IN keys(${variable}) WHERE ${propContains(`${variable}[k]`)})`;
   let queryText: string;
   if (mode === "relationship") {
     const scopePredicate = ids.length && scope !== "whole" ? " AND (id(n) IN $ids OR id(m) IN $ids)" : "";
@@ -602,7 +608,7 @@ export async function searchNodes(q: string, limit = 40) {
   const bounded = Math.max(1, Math.min(100, Math.floor(limit)));
   const records = await readRecords(
     `MATCH (n)
-     WHERE any(k IN keys(n) WHERE toString(n[k]) CONTAINS $q)
+     WHERE any(k IN keys(n) WHERE ${propContains("n[k]")})
      RETURN n, id(n) AS nodeId
      LIMIT $limit`, { q, limit: neo4j.int(bounded) },
   );
