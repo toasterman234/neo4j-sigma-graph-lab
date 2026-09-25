@@ -3,7 +3,7 @@ import "server-only";
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import type { JevRunResponse, QuestionMeta, QuestionSourceContext } from "@/lib/questions/runner";
+import type { JevRunResponse, QuestionMeta, QuestionSourceContext, RoutingTrace } from "@/lib/questions/runner";
 import type { SearchMode, SearchScope } from "@/lib/sigmaNeo4j";
 
 const MAX_SAVED_RESULTS = 100;
@@ -25,6 +25,7 @@ export type StoredResult = {
   confidence: Record<string, number>;
   evidence: JevRunResponse["evidence"];
   proposedRelationships: JevRunResponse["proposedRelationships"];
+  routing?: RoutingTrace;
 };
 
 let database: Database.Database | undefined;
@@ -55,6 +56,7 @@ export function getResultDatabase(): Database.Database {
       question TEXT NOT NULL,
       question_meta_json TEXT NOT NULL DEFAULT '{}',
       source_context_json TEXT NOT NULL DEFAULT '{}',
+      routing_json TEXT NOT NULL DEFAULT '{}',
       bounded_node_count INTEGER NOT NULL,
       bounded_relationship_count INTEGER NOT NULL,
       result_count INTEGER NOT NULL,
@@ -67,6 +69,7 @@ export function getResultDatabase(): Database.Database {
   `);
   ensureColumn(database, "question_meta_json", "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn(database, "source_context_json", "TEXT NOT NULL DEFAULT '{}'");
+  ensureColumn(database, "routing_json", "TEXT NOT NULL DEFAULT '{}'");
   return database;
 }
 
@@ -103,6 +106,7 @@ export function saveJevResult(input: { query: string; scope: SearchScope; mode: 
     question: String(result.question || "").slice(0, 1000),
     questionMetaJson: json(result.questionMeta, "questionMeta"),
     sourceContextJson: json(result.sourceContext, "sourceContext"),
+    routingJson: json(result.routing || {}, "routing"),
     boundedNodeCount: number(result.boundedContext?.nodeCount, "boundedContext.nodeCount"),
     boundedRelationshipCount: number(result.boundedContext?.relationshipCount, "boundedContext.relationshipCount"),
     resultCount: number(result.boundedContext?.resultCount, "boundedContext.resultCount"),
@@ -114,11 +118,11 @@ export function saveJevResult(input: { query: string; scope: SearchScope; mode: 
 
   const db = getResultDatabase();
   const insert = db.prepare(`INSERT INTO saved_jev_results (
-    created_at, query, scope, mode, question, question_meta_json, source_context_json,
+    created_at, query, scope, mode, question, question_meta_json, source_context_json, routing_json,
     bounded_node_count, bounded_relationship_count, result_count,
     judgment_json, confidence_json, evidence_json, proposed_relationships_json
   ) VALUES (
-    @createdAt, @query, @scope, @mode, @question, @questionMetaJson, @sourceContextJson,
+    @createdAt, @query, @scope, @mode, @question, @questionMetaJson, @sourceContextJson, @routingJson,
     @boundedNodeCount, @boundedRelationshipCount, @resultCount,
     @judgmentJson, @confidenceJson, @evidenceJson, @proposedRelationshipsJson
   )`);
@@ -137,6 +141,7 @@ export function listSavedJevResults(): StoredResult[] {
     question,
     question_meta_json AS questionMetaJson,
     source_context_json AS sourceContextJson,
+    routing_json AS routingJson,
     bounded_node_count AS boundedNodeCount,
     bounded_relationship_count AS boundedRelationshipCount,
     result_count AS resultCount,
@@ -160,6 +165,7 @@ export function getSavedJevResult(id: number): StoredResult | undefined {
     question,
     question_meta_json AS questionMetaJson,
     source_context_json AS sourceContextJson,
+    routing_json AS routingJson,
     bounded_node_count AS boundedNodeCount,
     bounded_relationship_count AS boundedRelationshipCount,
     result_count AS resultCount,
@@ -196,6 +202,7 @@ function parseRow(row: Record<string, unknown>): StoredResult {
     question: String(row.question),
     questionMeta: parseJson<QuestionMeta>(row.questionMetaJson, fallbackQuestionMeta),
     sourceContext: parseJson<QuestionSourceContext>(row.sourceContextJson, fallbackSourceContext),
+    routing: Object.keys(parseJson<Record<string, unknown>>(row.routingJson, {})).length ? parseJson<RoutingTrace>(row.routingJson, undefined as unknown as RoutingTrace) : undefined,
     boundedNodeCount: Number(row.boundedNodeCount),
     boundedRelationshipCount: Number(row.boundedRelationshipCount),
     resultCount: Number(row.resultCount),
