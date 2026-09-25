@@ -23,6 +23,7 @@ export type QuestionSourceContext = {
   searchMode: string;
   selectedNodeIds: string[];
   userNote?: string;
+  retrieval?: SearchResponse["retrieval"];
 };
 
 export type RoutingTrace = {
@@ -238,6 +239,7 @@ export async function runCatalogQuestion(request: RunCatalogQuestionRequest): Pr
       searchMode: request.search.mode,
       selectedNodeIds: (request.selectedNodeIds || []).slice(0, 20),
       userNote: request.userNote?.trim() || undefined,
+      retrieval: request.search.retrieval,
     },
     boundedContext: {
       nodeCount,
