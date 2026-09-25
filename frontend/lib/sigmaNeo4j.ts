@@ -4,6 +4,7 @@ import neo4j, { type Driver, type Integer, type Record as Neo4jRecord, type Node
 import Graph from "graphology";
 import { cypherToGraph } from "graphology-neo4j";
 import { displayLabel, humanizeLabel, humanizeNodeTitle, humanizeRelationship } from "@/lib/documentSource";
+import { mergeHybridResults } from "@/lib/semanticHybrid";
 
 for (const envPath of [path.resolve(process.cwd(), "../.env"), path.resolve(process.cwd(), ".env")]) {
   dotenv.config({ path: envPath, override: false });
@@ -401,10 +402,11 @@ export async function hybridSearchGraph(query: string, scope: SearchScope = "who
   }
 
   const semanticResults = semantic.response.results;
-  const combined = Array.from(new Map(
-    [...semanticResults, ...lexical.results.map((result) => ({ ...result, retrieval: result.retrieval || "lexical" as const }))]
-      .map((result) => [`${result.kind}:${result.id}`, result]),
-  ).values()).slice(0, Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit))));
+  const combined = mergeHybridResults(
+    semanticResults,
+    lexical.results,
+    Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit))),
+  );
   const context = mergeContexts(semantic.response.context, lexical.context);
 
   return {
