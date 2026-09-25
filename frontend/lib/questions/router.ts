@@ -4,7 +4,7 @@ import { confidenceFromJev, evaluateJevState, type JevProviderResponse } from "@
 import { getQuestionDefinition, type QuestionDefinition } from "@/lib/questions/catalog";
 import { buildQuestionState, compileQuestionDefinitions, runCatalogQuestion, type JevRunResponse, type RoutingTrace } from "@/lib/questions/runner";
 import { extractRouterSignals, planRouterFollowUps, ROUTER_QUESTION_IDS, ROUTER_VERSION, type RouterPlan, type RouterSignals, type RouterTrigger } from "@/lib/questions/routerPlan";
-import { hybridSearchGraph, type SearchMode, type SearchResponse, type SearchScope } from "@/lib/sigmaNeo4j";
+import { extractSelectedKnowledge, hybridSearchGraph, type DeterministicExtraction, type SearchMode, type SearchResponse, type SearchScope } from "@/lib/sigmaNeo4j";
 
 export type RouterFollowUp = {
   trigger: RouterTrigger;
@@ -24,6 +24,8 @@ export type RouterRunResponse = {
     boundedContext: { nodeCount: number; relationshipCount: number; resultCount: number };
   };
   plan: RouterPlan;
+  extraction?: DeterministicExtraction;
+  extractionError?: string;
   graphRetrieval?: {
     query: string;
     scope: SearchScope;
@@ -81,8 +83,28 @@ export async function runQuestionRouter(request: RunQuestionRouterRequest): Prom
   if (!nodeCount) throw new Error("No selected-item evidence was retrieved for the router");
 
   const raw = await evaluateJevState(state, compileQuestionDefinitions(definitions));
-  const signals = extractRouterSignals(answersForSignals(raw));
+  const modelSignals = extractRouterSignals(answersForSignals(raw));
+
+  let extraction: DeterministicExtraction | undefined;
+  let extractionError: string | undefined;
+  try {
+    extraction = await extractSelectedKnowledge(request.selectedNodeIds);
+  } catch (error) {
+    extractionError = error instanceof Error ? error.message : "Deterministic extraction failed";
+  }
+
+  const signals: RouterSignals = {
+    ...modelSignals,
+    namedEntityProbability: extraction?.entities.length
+      ? 1
+      : modelSignals.namedEntityProbability,
+  };
   const plan = planRouterFollowUps(signals);
+  if (modelSignals.namedEntityProbability >= 0.6 && !extraction?.entities.length) {
+    plan.deferred.push(extractionError
+      ? `Named-entity signal was high, but deterministic extraction failed: ${extractionError}`
+      : "Named-entity signal was high, but no named graph entity was deterministically extracted. External enrichment was not attempted.");
+  }
 
   const graphTriggers = plan.triggers.filter((trigger) => getQuestionDefinition(trigger.questionId)?.mode === "graph");
   let graphSearch: SearchResponse | undefined;
@@ -164,6 +186,8 @@ export async function runQuestionRouter(request: RunQuestionRouterRequest): Prom
       },
     },
     plan,
+    extraction,
+    extractionError,
     graphRetrieval: graphSearch ? {
       query: graphQuery,
       scope: graphSearch.scope,

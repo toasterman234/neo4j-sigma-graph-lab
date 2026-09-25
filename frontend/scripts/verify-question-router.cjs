@@ -58,7 +58,7 @@ const researchPlan = router.planRouterFollowUps({
   priorKnowledgeProbability: 0.1,
 });
 assert.ok(researchPlan.triggers.some((x) => x.questionId === "research_candidate"), "research intent should route to research candidate");
-assert.ok(researchPlan.deferred.some((x) => x.includes("Named-entity")), "named entities should be deferred to extraction/enrichment");
+assert.equal(researchPlan.deferred.length, 0, "named-entity reconciliation now occurs after deterministic extraction, not in the pure routing plan");
 
 const extracted = router.extractRouterSignals({
   object_type: { choice: "task" },

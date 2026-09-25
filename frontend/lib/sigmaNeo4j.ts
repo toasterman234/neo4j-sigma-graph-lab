@@ -5,6 +5,7 @@ import Graph from "graphology";
 import { cypherToGraph } from "graphology-neo4j";
 import { displayLabel, humanizeLabel, humanizeNodeTitle, humanizeRelationship } from "@/lib/documentSource";
 import { mergeHybridResults } from "@/lib/semanticHybrid";
+import { classifyEntityKind, extractDateFields, extractEntityName, extractQuotedSpans, extractUrls, sourceText, type ExtractedEntity } from "@/lib/deterministicExtraction";
 
 for (const envPath of [path.resolve(process.cwd(), "../.env"), path.resolve(process.cwd(), ".env")]) {
   dotenv.config({ path: envPath, override: false });
@@ -455,6 +456,108 @@ export async function searchGraph(query: string, scope: SearchScope = "whole", m
   return { query: clean, scope, mode, results: unique.map((result) => ({ ...result, retrieval: "lexical" as const })), context, counts: { nodes: context.nodes.length, relationships: context.relationships.length, results: unique.length }, retrieval: { strategy: "lexical" } };
 }
 
+
+export type DeterministicExtraction = {
+  selectedNodeIds: string[];
+  sourceUris: string[];
+  dates: Array<{ nodeId: string; field: string; value: string }>;
+  entities: ExtractedEntity[];
+  urls: string[];
+  quotes: string[];
+  counts: { selectedNodes: number; entities: number; urls: number; quotes: number };
+};
+
+export async function extractSelectedKnowledge(selectedNodeIds: string[]): Promise<DeterministicExtraction> {
+  const ids = selectedIds(selectedNodeIds);
+  if (!ids.length) {
+    return {
+      selectedNodeIds: [],
+      sourceUris: [],
+      dates: [],
+      entities: [],
+      urls: [],
+      quotes: [],
+      counts: { selectedNodes: 0, entities: 0, urls: 0, quotes: 0 },
+    };
+  }
+
+  const records = await readRecords(
+    `MATCH (selected)
+     WHERE id(selected) IN $ids
+     OPTIONAL MATCH (selected)-[r]-(neighbor)
+     RETURN selected, id(selected) AS selectedId, r, neighbor, id(neighbor) AS neighborId
+     LIMIT $limit`,
+    { ids, limit: neo4j.int(240) },
+  );
+
+  const selected = new Map<string, { labels: string[]; properties: Record<string, unknown> }>();
+  const entityMap = new Map<string, ExtractedEntity>();
+  for (const record of records) {
+    const selectedNode = record.get("selected") as Neo4jNode | null;
+    const selectedId = record.get("selectedId")?.toString?.() ?? "";
+    if (selectedNode && selectedId && !selected.has(selectedId)) {
+      selected.set(selectedId, {
+        labels: [...selectedNode.labels],
+        properties: plain(selectedNode.properties) as Record<string, unknown>,
+      });
+    }
+
+    const neighbor = record.get("neighbor") as Neo4jNode | null;
+    const neighborId = record.get("neighborId")?.toString?.() ?? "";
+    if (!neighbor || !neighborId || ids.some((id) => id.toString() === neighborId)) continue;
+    const properties = plain(neighbor.properties) as Record<string, unknown>;
+    const labels = [...neighbor.labels];
+    if (labels.includes("Chunk") || labels.includes("DocumentId")) continue;
+    const name = extractEntityName(properties);
+    if (!name) continue;
+    const relationship = record.get("r") as { type?: string } | null;
+    const relationshipType = relationship?.type ? String(relationship.type) : "";
+    const existing = entityMap.get(neighborId);
+    if (existing) {
+      if (relationshipType && !existing.relationshipTypes.includes(relationshipType)) existing.relationshipTypes.push(relationshipType);
+    } else {
+      entityMap.set(neighborId, {
+        id: neighborId,
+        name,
+        kind: classifyEntityKind(labels, properties),
+        labels,
+        relationshipTypes: relationshipType ? [relationshipType] : [],
+      });
+    }
+  }
+
+  const sourceUris: string[] = [];
+  const dates: DeterministicExtraction["dates"] = [];
+  const textParts: string[] = [];
+  for (const [nodeId, node] of selected) {
+    const uri = sourceUri(node.properties);
+    if (uri && !sourceUris.includes(uri)) sourceUris.push(uri);
+    for (const date of extractDateFields(node.properties)) dates.push({ nodeId, ...date });
+    const text = sourceText(node.properties);
+    if (text) textParts.push(text);
+  }
+  const text = textParts.join("\n");
+  const urls = extractUrls(text);
+  const quotes = extractQuotedSpans(text);
+  const entities = Array.from(entityMap.values())
+    .sort((left, right) => left.kind.localeCompare(right.kind) || left.name.localeCompare(right.name))
+    .slice(0, 40);
+
+  return {
+    selectedNodeIds: Array.from(selected.keys()),
+    sourceUris: sourceUris.slice(0, 20),
+    dates: dates.slice(0, 40),
+    entities,
+    urls,
+    quotes,
+    counts: {
+      selectedNodes: selected.size,
+      entities: entities.length,
+      urls: urls.length,
+      quotes: quotes.length,
+    },
+  };
+}
 
 export async function selectedItemContext(selectedNodeIds: string[], query = "selected item", limit = MAX_JEV_ITEM_RESULTS): Promise<SearchResponse> {
   const ids = selectedIds(selectedNodeIds);
