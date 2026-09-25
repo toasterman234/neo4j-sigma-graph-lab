@@ -25,6 +25,14 @@ export type QuestionSourceContext = {
   userNote?: string;
 };
 
+export type RoutingTrace = {
+  kind: "router";
+  routerVersion: number;
+  routerQuestionIds: string[];
+  reasons: string[];
+  signals: Record<string, unknown>;
+};
+
 export type JevRunResponse = {
   question: string;
   questionMeta: QuestionMeta;
@@ -34,6 +42,7 @@ export type JevRunResponse = {
   confidence: Record<string, number>;
   evidence: Array<{ id: string; title: string; excerpt: string; kind: string }>;
   proposedRelationships: Array<{ sourceId: string; targetId: string; type: string; status: "provisional"; reason: string }>;
+  routing?: RoutingTrace;
 };
 
 export type RunCatalogQuestionRequest = {
@@ -41,9 +50,10 @@ export type RunCatalogQuestionRequest = {
   userNote?: string;
   search: SearchResponse;
   selectedNodeIds?: string[];
+  routing?: RoutingTrace;
 };
 
-function compileQuestionSet(definition: QuestionDefinition): JevPromptSet {
+export function compileQuestionSet(definition: QuestionDefinition): JevPromptSet {
   const instructions = `${definition.text}\n\nGuidance: ${definition.description}`;
   const questions: JevPromptSet = {};
 
@@ -77,7 +87,19 @@ function compileQuestionSet(definition: QuestionDefinition): JevPromptSet {
   return questions;
 }
 
-function buildState(request: RunCatalogQuestionRequest, definition: QuestionDefinition): {
+export function compileQuestionDefinitions(definitions: readonly QuestionDefinition[]): JevPromptSet {
+  const combined: JevPromptSet = {};
+  for (const definition of definitions) {
+    const compiled = compileQuestionSet(definition);
+    for (const [key, question] of Object.entries(compiled)) {
+      if (key in combined) throw new Error(`Duplicate Jev question key while compiling router set: ${key}`);
+      combined[key] = question;
+    }
+  }
+  return combined;
+}
+
+export function buildQuestionState(request: RunCatalogQuestionRequest, definitions: readonly QuestionDefinition[]): {
   state: string;
   evidence: JevRunResponse["evidence"];
   candidateIds: string[];
@@ -103,7 +125,16 @@ function buildState(request: RunCatalogQuestionRequest, definition: QuestionDefi
   }));
 
   const stateObject = {
-    catalogQuestion: {
+    catalogQuestion: definitions.length === 1 ? {
+      id: definitions[0].id,
+      version: definitions[0].version,
+      title: definitions[0].title,
+      text: definitions[0].text,
+      group: definitions[0].group,
+      mode: definitions[0].mode,
+      requiresEvidence: definitions[0].requiresEvidence,
+    } : undefined,
+    catalogQuestions: definitions.map((definition) => ({
       id: definition.id,
       version: definition.version,
       title: definition.title,
@@ -111,7 +142,7 @@ function buildState(request: RunCatalogQuestionRequest, definition: QuestionDefi
       group: definition.group,
       mode: definition.mode,
       requiresEvidence: definition.requiresEvidence,
-    },
+    })),
     userNote: request.userNote?.trim() || undefined,
     search: {
       query: request.search.query,
@@ -187,7 +218,7 @@ export async function runCatalogQuestion(request: RunCatalogQuestionRequest): Pr
   const definition = getQuestionDefinition(request.questionId || DEFAULT_QUESTION_ID);
   if (!definition) throw new Error(`Unknown question id: ${request.questionId}`);
 
-  const { state, evidence, candidateIds, nodeCount, relationshipCount } = buildState(request, definition);
+  const { state, evidence, candidateIds, nodeCount, relationshipCount } = buildQuestionState(request, [definition]);
   if (!nodeCount) throw new Error("No bounded graph evidence was retrieved for this question");
 
   const raw = await evaluateJevState(state, compileQuestionSet(definition));
@@ -220,6 +251,7 @@ export async function runCatalogQuestion(request: RunCatalogQuestionRequest): Pr
     confidence: confidenceFromJev(raw),
     evidence,
     proposedRelationships: provisionalRelationships(definition, raw, candidateIds),
+    routing: request.routing,
   };
 }
 
