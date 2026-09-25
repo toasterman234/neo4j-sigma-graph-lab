@@ -28,6 +28,10 @@ jobs:
         working-directory: frontend
         run: npm ci --legacy-peer-deps
 
+      - name: Question catalog contract
+        working-directory: frontend
+        run: npm run test:catalog
+
       - name: TypeScript
         working-directory: frontend
         run: npx tsc --noEmit
