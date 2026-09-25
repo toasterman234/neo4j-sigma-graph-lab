@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - work/question-catalog-jev
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
