@@ -121,7 +121,6 @@ export function SigmaNeo4jExplorer() {
   }), [searchResults]);
   const manualQuestions = useMemo(() => QUESTION_CATALOG.filter((question) => !question.routerOnly), []);
   const selectedQuestion = useMemo(() => getQuestionDefinition(questionId) || manualQuestions[0], [questionId, manualQuestions]);
-  const canRunQuestion = selectedQuestion.mode === "item" ? Boolean(selected) : Boolean(search.trim());
 
   async function load(url: string) {
     setBusy(true);
@@ -187,7 +186,12 @@ export function SigmaNeo4jExplorer() {
     const queryText = selectedQuestion.mode === "item"
       ? (search.trim() || selectedSource?.title || (selected ? titleOf(selected) : selectedQuestion.title))
       : search.trim();
-    if (!queryText || (selectedQuestion.mode === "item" && !selectedNodeIds.length)) return;
+    if (!queryText || (selectedQuestion.mode === "item" && !selectedNodeIds.length)) {
+      setStatus(selectedQuestion.mode === "item"
+        ? "Select a document/source or graph object first, then run this item question."
+        : "Enter a bounded graph search query first, then run this question.");
+      return;
+    }
     setReasonBusy(true); setReasoning(null); setActiveSavedId(null);
     try {
       const response = await fetch("/api/jev/run", {
@@ -293,7 +297,7 @@ export function SigmaNeo4jExplorer() {
       <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search graph extraction, Neo4j decisions, related documents…" />
       <div className="sigma-selector-group"><span>Scope</span><div className="sigma-segmented" role="group" aria-label="Search scope">{scopeOptions.map((option) => <button key={option.value} className={searchScope === option.value ? "selected" : ""} title={option.detail} onClick={() => setSearchScope(option.value)}>{option.label}</button>)}</div></div>
       <div className="sigma-selector-group"><span>Mode</span><div className="sigma-segmented" role="group" aria-label="Search mode">{modeOptions.map((option) => <button key={option.value} className={searchMode === option.value ? "selected" : ""} title={option.detail} onClick={() => setSearchMode(option.value)}>{option.label}</button>)}</div></div>
-      <div className="sigma-search-actions"><button className="sigma-primary-button" onClick={autoRouteSelected} disabled={!selected || routerBusy}>{routerBusy ? "Routing…" : "Auto-route selected"}</button><button onClick={reasonWithJev} disabled={!canRunQuestion || reasonBusy}>{reasonBusy ? "Reasoning…" : "Run one question"}</button>{search && <button onClick={() => { setSearch(""); setSearchResults([]); setReasoning(null); setRouted(null); setActiveSavedId(null); }}>Clear search</button>}</div>
+      <div className="sigma-search-actions"><button className="sigma-primary-button" onClick={autoRouteSelected} disabled={!selected || routerBusy}>{routerBusy ? "Routing…" : "Auto-route selected"}</button><button onClick={reasonWithJev} disabled={reasonBusy}>{reasonBusy ? "Reasoning…" : "Run one question"}</button>{search && <button onClick={() => { setSearch(""); setSearchResults([]); setReasoning(null); setRouted(null); setActiveSavedId(null); }}>Clear search</button>}</div>
       {searchResults.length > 0 && <div className="sigma-search-results">{Object.entries(resultGroups).map(([group, results]) => results.length > 0 && <div key={group}><h4>{group} <small>{results.length}</small></h4>{results.map((result) => <button key={`${result.kind}:${result.id}`} onClick={() => focusResult(result)}><strong>{result.title}</strong><span>{result.labels.join(" · ")} · {result.snippet}</span></button>)}</div>)}</div>}
       <div className="sigma-selector-group"><span>Question catalog</span><select aria-label="Jev catalog question" value={questionId} onChange={(e) => { setQuestionId(e.target.value); setReasoning(null); setActiveSavedId(null); }}>{manualQuestions.map((question) => <option key={question.id} value={question.id}>{question.group} · {question.title}</option>)}</select><span className="sigma-muted">{selectedQuestion.mode} · v{selectedQuestion.version} · {selectedQuestion.description}</span><input aria-label="Optional Jev context note" value={reasonQuestion} onChange={(e) => setReasonQuestion(e.target.value)} placeholder="Optional extra context for this run…" />{selectedQuestion.mode === "item" && !selected && <small className="sigma-muted">Select a document/source or graph object to run this item question.</small>}{selectedQuestion.mode === "graph" && !search.trim() && <small className="sigma-muted">Enter a bounded graph search query to run this relationship question.</small>}</div>
       <textarea value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Read-only Cypher query" />
