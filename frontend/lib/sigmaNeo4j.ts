@@ -206,10 +206,9 @@ async function detectVectorCapability(preferredIndex = process.env.NEO4J_VECTOR_
     const records = await readRecords(
       `SHOW INDEXES
        YIELD name, type, state, labelsOrTypes, properties
-       WHERE type = 'VECTOR' AND state = 'ONLINE'
+       WHERE type = 'VECTOR' AND state = 'ONLINE' AND name = $preferred
        RETURN name, labelsOrTypes, properties
-       ORDER BY CASE WHEN name = $preferred THEN 0 ELSE 1 END, name
-       LIMIT 10`,
+       LIMIT 1`,
       { preferred: preferredIndex },
     );
     for (const record of records) {
