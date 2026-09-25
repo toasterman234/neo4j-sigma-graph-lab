@@ -88,6 +88,11 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+function parseOptionalJson<T>(value: unknown): T | undefined {
+  const parsed = parseJson<Record<string, unknown>>(value, {});
+  return Object.keys(parsed).length ? parsed as T : undefined;
+}
+
 function number(value: unknown, field: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${field} must be a number`);
   return value;
@@ -202,7 +207,7 @@ function parseRow(row: Record<string, unknown>): StoredResult {
     question: String(row.question),
     questionMeta: parseJson<QuestionMeta>(row.questionMetaJson, fallbackQuestionMeta),
     sourceContext: parseJson<QuestionSourceContext>(row.sourceContextJson, fallbackSourceContext),
-    routing: Object.keys(parseJson<Record<string, unknown>>(row.routingJson, {})).length ? parseJson<RoutingTrace>(row.routingJson, undefined as unknown as RoutingTrace) : undefined,
+    routing: parseOptionalJson<RoutingTrace>(row.routingJson),
     boundedNodeCount: Number(row.boundedNodeCount),
     boundedRelationshipCount: Number(row.boundedRelationshipCount),
     resultCount: Number(row.resultCount),
