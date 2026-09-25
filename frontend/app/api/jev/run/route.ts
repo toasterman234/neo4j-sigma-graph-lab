@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_QUESTION_ID, getQuestionDefinition, validateQuestionCatalog } from "@/lib/questions/catalog";
 import { runCatalogQuestion } from "@/lib/questions/runner";
-import { searchGraph, selectedItemContext, type SearchMode, type SearchScope } from "@/lib/sigmaNeo4j";
+import { hybridSearchGraph, searchGraph, selectedItemContext, type SearchMode, type SearchScope } from "@/lib/sigmaNeo4j";
 
 export const runtime = "nodejs";
 
@@ -44,7 +44,9 @@ export async function POST(request: Request) {
       search = await selectedItemContext(selectedNodeIds, query || definition.title, 24);
     } else if (definition.mode === "graph") {
       if (!query) return NextResponse.json({ error: `${definition.title} requires a graph search query` }, { status: 400 });
-      search = await searchGraph(query, scope, mode, selectedNodeIds, 80);
+      search = selectedNodeIds.length
+        ? await hybridSearchGraph(query, scope, mode, selectedNodeIds, 80)
+        : await searchGraph(query, scope, mode, selectedNodeIds, 80);
     } else {
       return NextResponse.json({ error: `Question mode '${definition.mode}' is cataloged but not implemented yet` }, { status: 400 });
     }
