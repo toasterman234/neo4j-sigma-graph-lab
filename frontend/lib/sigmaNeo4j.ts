@@ -338,17 +338,16 @@ async function semanticSearchFromSelected(query: string, selectedNodeIds: string
   const candidates = new Set(candidateIds);
   const results = context.nodes
     .filter((node) => candidates.has(node.id))
-    .map((node) => {
+    .flatMap((node): SearchResult[] => {
       const result = nodeSearchResult(node as { id: string; labels: string[]; properties: Record<string, unknown> }, query);
-      if (!result) return undefined;
-      return {
+      if (!result) return [];
+      return [{
         ...result,
         score: scores.get(node.id),
-        retrieval: "semantic" as const,
+        retrieval: "semantic",
         sourceNodeIds: sourceNeighborIds(node.id, context),
-      };
+      }];
     })
-    .filter((result): result is SearchResult => Boolean(result))
     .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
     .slice(0, limit);
 
