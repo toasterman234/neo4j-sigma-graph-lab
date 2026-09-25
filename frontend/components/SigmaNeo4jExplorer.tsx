@@ -6,6 +6,7 @@ import Sigma from "sigma";
 import { LabNav } from "@/components/LabNav";
 import { buildDocumentSourceView, displayDate, displayLabel, humanizeRelationship, rawSourceProperties, type GraphPayload, type NodePayload, type SourceSummary } from "@/lib/documentSource";
 import type { SearchMode, SearchResult, SearchScope } from "@/lib/sigmaNeo4j";
+import { DEFAULT_QUESTION_ID, QUESTION_CATALOG, getQuestionDefinition } from "@/lib/questions/catalog";
 
 const DEFAULT_QUERY = "MATCH (n)-[r]-(m) RETURN n, r, m LIMIT $limit";
 const palette = ["#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#fb7185", "#f97316"];
@@ -35,7 +36,7 @@ function semanticNodes(source: SourceSummary, nodesById: Map<string, NodePayload
   return source.semanticNodeIds.map((id) => nodesById.get(id)).filter((node): node is NodePayload => Boolean(node));
 }
 
-type SavedResult = { id: number; createdAt: string; query: string; scope: SearchScope; mode: SearchMode; question: string; boundedNodeCount: number; boundedRelationshipCount: number; resultCount: number; judgment: Record<string, unknown>; confidence: Record<string, number>; evidence: Array<{ id: string; title: string; excerpt: string; kind: string }>; proposedRelationships: Array<{ sourceId: string; targetId: string; type: string; status?: string; reason?: string }> };
+type SavedResult = { id: number; createdAt: string; query: string; scope: SearchScope; mode: SearchMode; question: string; questionMeta?: { id: string; version: number; title: string; group: string; mode: string }; sourceContext?: { query: string; scope: string; searchMode: string; selectedNodeIds: string[]; userNote?: string }; boundedNodeCount: number; boundedRelationshipCount: number; resultCount: number; judgment: Record<string, unknown>; confidence: Record<string, number>; evidence: Array<{ id: string; title: string; excerpt: string; kind: string }>; proposedRelationships: Array<{ sourceId: string; targetId: string; type: string; status?: string; reason?: string }> };
 type JevAnswer = { type?: string; probability?: number; choice?: string; probabilities?: Record<string, number>; score?: number };
 const answerLabels: Record<string, string> = { missing_relationship: "Missing relationship", supersession: "Supersession", temporal_status: "Temporal status", evidence_alignment: "Evidence alignment", candidate_relationship: "Candidate relationship", question_focus: "Question focus" };
 const scopeOptions: Array<{ value: SearchScope; label: string; detail: string }> = [{ value: "whole", label: "Whole graph", detail: "Search all bounded graph context" }, { value: "neighborhood", label: "Neighborhood", detail: "Search around selected nodes" }, { value: "selected", label: "Selected node", detail: "Search selected source or node" }];
@@ -46,7 +47,13 @@ function answerEntries(reasoning: Record<string, unknown> | null): Array<[string
   return answers ? Object.entries(answers) : [];
 }
 
-function answerTitle(id: string): string { return answerLabels[id] || id.replaceAll("_", " "); }
+function answerTitle(id: string): string {
+  const [questionId, criterion] = id.split("__", 2);
+  const definition = getQuestionDefinition(questionId);
+  if (definition && criterion) return `${definition.title}: ${criterion.replaceAll("_", " ")}`;
+  if (definition) return definition.title;
+  return answerLabels[id] || id.replaceAll("_", " ");
+}
 function scorePercent(value: number): string { return `${Math.max(0, Math.min(1, value)) * 100}%`; }
 
 function JevAnswerCard({ id, answer, confidence }: { id: string; answer: JevAnswer; confidence?: number }) {
@@ -66,8 +73,8 @@ export function SigmaNeo4jExplorer() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchScope, setSearchScope] = useState<SearchScope>("whole");
   const [searchMode, setSearchMode] = useState<SearchMode>("keyword");
-  const [reasonQuestion, setReasonQuestion] = useState("Are any important relationships missing between these results?");
-  const [reasonType, setReasonType] = useState("missing_relationship");
+  const [reasonQuestion, setReasonQuestion] = useState("");
+  const [questionId, setQuestionId] = useState(DEFAULT_QUESTION_ID);
   const [reasoning, setReasoning] = useState<Record<string, unknown> | null>(null);
   const [reasonBusy, setReasonBusy] = useState(false);
   const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
@@ -90,6 +97,8 @@ export function SigmaNeo4jExplorer() {
     Nodes: searchResults.filter((result) => result.kind === "node"),
     Relationships: searchResults.filter((result) => result.kind === "relationship"),
   }), [searchResults]);
+  const selectedQuestion = useMemo(() => getQuestionDefinition(questionId) || QUESTION_CATALOG[0], [questionId]);
+  const canRunQuestion = selectedQuestion.mode === "item" ? Boolean(selected) : Boolean(search.trim());
 
   async function load(url: string) {
     setBusy(true);
@@ -151,10 +160,25 @@ export function SigmaNeo4jExplorer() {
     focus({ id, labels: result.labels, properties: result.properties || { title: result.title } });
   }
   async function reasonWithJev() {
-    if (!search.trim()) return;
+    const selectedNodeIds = selectedSource ? selectedSource.chunks.map((chunk) => chunk.id).slice(0, 20) : selected ? [selected.id] : [];
+    const queryText = selectedQuestion.mode === "item"
+      ? (search.trim() || selectedSource?.title || (selected ? titleOf(selected) : selectedQuestion.title))
+      : search.trim();
+    if (!queryText || (selectedQuestion.mode === "item" && !selectedNodeIds.length)) return;
     setReasonBusy(true); setReasoning(null); setActiveSavedId(null);
     try {
-      const response = await fetch("/api/jev/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: search, scope: searchScope, mode: searchMode, selectedNodeIds: selectedSource ? selectedSource.chunks.map((chunk) => chunk.id).slice(0, 20) : selected ? [selected.id] : [], question: reasonQuestion, questionType: reasonType }) });
+      const response = await fetch("/api/jev/run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          query: queryText,
+          scope: searchScope,
+          mode: searchMode,
+          selectedNodeIds,
+          question: reasonQuestion,
+          questionId,
+        }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Jev request failed");
       setReasoning(data);
@@ -163,15 +187,37 @@ export function SigmaNeo4jExplorer() {
   }
   function openSavedResult(result: SavedResult) {
     setActiveSavedId(result.id);
-    setSearch(result.query); setSearchScope(result.scope); setSearchMode(result.mode); setReasonQuestion(result.question);
-    setReasoning({ question: result.question, boundedContext: { nodeCount: result.boundedNodeCount, relationshipCount: result.boundedRelationshipCount, resultCount: result.resultCount }, judgment: result.judgment, confidence: result.confidence, evidence: result.evidence, proposedRelationships: result.proposedRelationships });
+    setSearch(result.query); setSearchScope(result.scope); setSearchMode(result.mode);
+    if (result.questionMeta?.id && getQuestionDefinition(result.questionMeta.id)) setQuestionId(result.questionMeta.id);
+    setReasonQuestion(result.sourceContext?.userNote || "");
+    setReasoning({
+      question: result.question,
+      questionMeta: result.questionMeta,
+      sourceContext: result.sourceContext,
+      boundedContext: { nodeCount: result.boundedNodeCount, relationshipCount: result.boundedRelationshipCount, resultCount: result.resultCount },
+      judgment: result.judgment,
+      confidence: result.confidence,
+      evidence: result.evidence,
+      proposedRelationships: result.proposedRelationships,
+    });
     setStatus(`Opened saved Jev result #${result.id}`);
   }
   async function saveReasoning() {
-    if (!reasoning || !search.trim()) return;
+    if (!reasoning) return;
+    const sourceContext = reasoning.sourceContext as { query?: string; scope?: SearchScope; searchMode?: SearchMode } | undefined;
+    const saveQuery = sourceContext?.query || search.trim() || selectedQuestion.title;
     setSaveBusy(true);
     try {
-      const response = await fetch("/api/results", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: search, scope: searchScope, mode: searchMode, result: reasoning }) });
+      const response = await fetch("/api/results", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          query: saveQuery,
+          scope: sourceContext?.scope || searchScope,
+          mode: sourceContext?.searchMode || searchMode,
+          result: reasoning,
+        }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to save result");
       setSavedResults((current) => [data.result, ...current.filter((result) => result.id !== data.result.id)].slice(0, 100));
@@ -189,15 +235,15 @@ export function SigmaNeo4jExplorer() {
       <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search graph extraction, Neo4j decisions, related documents…" />
       <div className="sigma-selector-group"><span>Scope</span><div className="sigma-segmented" role="group" aria-label="Search scope">{scopeOptions.map((option) => <button key={option.value} className={searchScope === option.value ? "selected" : ""} title={option.detail} onClick={() => setSearchScope(option.value)}>{option.label}</button>)}</div></div>
       <div className="sigma-selector-group"><span>Mode</span><div className="sigma-segmented" role="group" aria-label="Search mode">{modeOptions.map((option) => <button key={option.value} className={searchMode === option.value ? "selected" : ""} title={option.detail} onClick={() => setSearchMode(option.value)}>{option.label}</button>)}</div></div>
-      <div className="sigma-search-actions"><button className="sigma-primary-button" onClick={reasonWithJev} disabled={!search.trim() || reasonBusy}>{reasonBusy ? "Reasoning…" : "Reason with Jev"}</button>{search && <button onClick={() => { setSearch(""); setSearchResults([]); setReasoning(null); setActiveSavedId(null); }}>Clear search</button>}</div>
+      <div className="sigma-search-actions"><button className="sigma-primary-button" onClick={reasonWithJev} disabled={!canRunQuestion || reasonBusy}>{reasonBusy ? "Reasoning…" : "Run catalog question"}</button>{search && <button onClick={() => { setSearch(""); setSearchResults([]); setReasoning(null); setActiveSavedId(null); }}>Clear search</button>}</div>
       {searchResults.length > 0 && <div className="sigma-search-results">{Object.entries(resultGroups).map(([group, results]) => results.length > 0 && <div key={group}><h4>{group} <small>{results.length}</small></h4>{results.map((result) => <button key={`${result.kind}:${result.id}`} onClick={() => focusResult(result)}><strong>{result.title}</strong><span>{result.labels.join(" · ")} · {result.snippet}</span></button>)}</div>)}</div>}
-      <div className="sigma-selector-group"><span>Jev focus</span><div className="sigma-segmented" role="group" aria-label="Jev question focus">{[{ value: "missing_relationship", label: "Missing links" }, { value: "supersession", label: "Supersession" }, { value: "temporal_status", label: "Current / old" }, { value: "evidence_alignment", label: "Evidence" }].map((option) => <button key={option.value} className={reasonType === option.value ? "selected" : ""} onClick={() => setReasonType(option.value)}>{option.label}</button>)}</div><input aria-label="Jev question" value={reasonQuestion} onChange={(e) => setReasonQuestion(e.target.value)} /></div>
+      <div className="sigma-selector-group"><span>Question catalog</span><select aria-label="Jev catalog question" value={questionId} onChange={(e) => { setQuestionId(e.target.value); setReasoning(null); setActiveSavedId(null); }}>{QUESTION_CATALOG.map((question) => <option key={question.id} value={question.id}>{question.group} · {question.title}</option>)}</select><span className="sigma-muted">{selectedQuestion.mode} · v{selectedQuestion.version} · {selectedQuestion.description}</span><input aria-label="Optional Jev context note" value={reasonQuestion} onChange={(e) => setReasonQuestion(e.target.value)} placeholder="Optional extra context for this run…" />{selectedQuestion.mode === "item" && !selected && <small className="sigma-muted">Select a document/source or graph object to run this item question.</small>}{selectedQuestion.mode === "graph" && !search.trim() && <small className="sigma-muted">Enter a bounded graph search query to run this relationship question.</small>}</div>
       <textarea value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Read-only Cypher query" />
       <div className="sigma-filter-row"><span>Hide labels:</span>{allLabels.slice(0, 12).map((label) => <button key={label} className={hiddenLabels.includes(label) ? "active" : ""} onClick={() => toggle(hiddenLabels, label, setHiddenLabels)}>{label}</button>)}</div><div className="sigma-filter-row"><span>Hide relationships:</span>{allTypes.slice(0, 12).map((type) => <button key={type} className={hiddenTypes.includes(type) ? "active" : ""} onClick={() => toggle(hiddenTypes, type, setHiddenTypes)}>{humanizeRelationship(type)}</button>)}</div>
     </div>
     <div className="sigma-status">{status}</div>
-    {reasoning && <section className="sigma-reasoning"><div><div><strong>{activeSavedId ? `Saved result #${activeSavedId}` : "Provider response"}</strong><span className="sigma-badge">{activeSavedId ? "saved" : "unverified decision"}</span></div><span className="sigma-muted">bounded context: {String((reasoning.boundedContext as { nodeCount?: number })?.nodeCount || 0)} nodes · {String((reasoning.boundedContext as { relationshipCount?: number })?.relationshipCount || 0)} relationships</span><button className="sigma-save-button" onClick={saveReasoning} disabled={saveBusy}>{saveBusy ? "Saving…" : "Save result"}</button></div><div className="jev-answer-grid">{answerEntries(reasoning).map(([id, answer]) => <JevAnswerCard key={id} id={id} answer={answer} confidence={(reasoning.confidence as Record<string, number> | undefined)?.[id]} />)}</div><p className="sigma-unverified-note">Typed judgment, not proof. Review the evidence before acting.</p>{Array.isArray(reasoning.evidence) && <><h4>Supporting evidence</h4><div className="sigma-evidence-list">{(reasoning.evidence as Array<{ id: string; title: string; excerpt: string }>).map((item) => <button key={item.id} onClick={() => focusResult({ id: item.id, kind: "source", labels: [], title: item.title, snippet: item.excerpt })}>{item.title}: {item.excerpt}</button>)}</div></>}{Array.isArray(reasoning.proposedRelationships) && (reasoning.proposedRelationships as Array<{ sourceId: string; targetId: string; type: string }>).length > 0 && <><h4>Provisional relationship suggestions</h4><p className="sigma-muted">Suggestions only. No graph write was performed.</p><pre>{JSON.stringify(reasoning.proposedRelationships, null, 2)}</pre></>}</section>}
-    {savedResults.length > 0 && <section className="sigma-saved-results"><strong>Saved results</strong><span className="sigma-muted">local SQLite · {savedResults.length}</span><div>{savedResults.slice(0, 8).map((result) => <button className={activeSavedId === result.id ? "active" : ""} key={result.id} onClick={() => openSavedResult(result)}><strong>#{result.id} · {result.query}</strong><span>{result.scope} · {result.mode} · {new Date(result.createdAt).toLocaleString()}</span><small>{result.question}</small></button>)}</div></section>}
+    {reasoning && <section className="sigma-reasoning"><div><div><strong>{activeSavedId ? `Saved result #${activeSavedId}` : "Provider response"}</strong><span className="sigma-badge">{activeSavedId ? "saved" : "unverified decision"}</span></div><span className="sigma-muted">{String((reasoning.questionMeta as { title?: string; group?: string; mode?: string } | undefined)?.title || "Jev judgment")} · {String((reasoning.questionMeta as { group?: string } | undefined)?.group || "legacy")} · {String((reasoning.questionMeta as { mode?: string } | undefined)?.mode || "graph")}</span><span className="sigma-muted">bounded context: {String((reasoning.boundedContext as { nodeCount?: number })?.nodeCount || 0)} nodes · {String((reasoning.boundedContext as { relationshipCount?: number })?.relationshipCount || 0)} relationships</span><button className="sigma-save-button" onClick={saveReasoning} disabled={saveBusy}>{saveBusy ? "Saving…" : "Save result"}</button></div><div className="jev-answer-grid">{answerEntries(reasoning).map(([id, answer]) => <JevAnswerCard key={id} id={id} answer={answer} confidence={(reasoning.confidence as Record<string, number> | undefined)?.[id]} />)}</div><p className="sigma-unverified-note">Typed judgment, not proof. Review the evidence before acting.</p>{Array.isArray(reasoning.evidence) && <><h4>Supporting evidence</h4><div className="sigma-evidence-list">{(reasoning.evidence as Array<{ id: string; title: string; excerpt: string }>).map((item) => <button key={item.id} onClick={() => focusResult({ id: item.id, kind: "source", labels: [], title: item.title, snippet: item.excerpt })}>{item.title}: {item.excerpt}</button>)}</div></>}{Array.isArray(reasoning.proposedRelationships) && (reasoning.proposedRelationships as Array<{ sourceId: string; targetId: string; type: string }>).length > 0 && <><h4>Provisional relationship suggestions</h4><p className="sigma-muted">Suggestions only. No graph write was performed.</p><pre>{JSON.stringify(reasoning.proposedRelationships, null, 2)}</pre></>}</section>}
+    {savedResults.length > 0 && <section className="sigma-saved-results"><strong>Saved results</strong><span className="sigma-muted">local SQLite · {savedResults.length}</span><div>{savedResults.slice(0, 8).map((result) => <button className={activeSavedId === result.id ? "active" : ""} key={result.id} onClick={() => openSavedResult(result)}><strong>#{result.id} · {result.query}</strong><span>{result.scope} · {result.mode} · {new Date(result.createdAt).toLocaleString()}</span><small>{result.questionMeta?.title || result.question}</small></button>)}</div></section>}
     <div className="sigma-body"><div ref={containerRef} className="sigma-canvas" /><aside className="sigma-inspector"><h3>{selectedSource ? "Document / Source" : "Selected graph object"}</h3>{selected ? selectedSource ? <><div className="sigma-node-title">{selectedSource.title}</div><div className="sigma-source-path">{selectedSource.path}</div><div className="sigma-labels"><span>Document</span><span>{selectedSource.sourceType}</span></div><dl className="sigma-provenance"><dt>Location</dt><dd>{selectedSource.path}</dd><dt>Created</dt><dd>{displayDate(selectedSource.created)}</dd><dt>Modified</dt><dd>{displayDate(selectedSource.modified)}</dd><dt>Ingested</dt><dd>{displayDate(selectedSource.ingested)}</dd></dl><h4>Contents</h4>{selectedSource.content ? <pre className="sigma-content">{selectedSource.content}</pre> : <p className="sigma-muted">No readable chunk text is available.</p>}<h4>Extracted from this document</h4><div className="sigma-semantic-list">{semanticNodes(selectedSource, nodesById).map((node) => <button key={node.id} onClick={() => focus(node)}>{labelOf(node)} · {titleOf(node)}</button>)}</div><div className="sigma-inspector-actions"><button onClick={expand}>Expand evidence</button><button onClick={() => setRawOpen((open) => !open)}>{rawOpen ? "Hide raw evidence" : "Show raw evidence"}</button></div>{rawOpen && <pre>{JSON.stringify(rawSourceProperties(selectedSource), null, 2)}</pre>}</> : <><div className="sigma-node-title">{titleOf(selected)}</div><div className="sigma-muted">{labelOf(selected)} · named graph concept</div><div className="sigma-labels">{selected.labels.map((label) => <span key={label}>{label}</span>)}</div><p className="sigma-muted">This semantic object is connected to source evidence when available.</p><button onClick={expand}>Expand neighbors</button>{rawOpen && <pre>{JSON.stringify(selected.properties, null, 2)}</pre>}<button onClick={() => setRawOpen((open) => !open)}>{rawOpen ? "Hide raw properties" : "Show raw properties"}</button></> : <p className="sigma-muted">Select a document/source to see provenance, readable contents, extracted objects, and evidence relationships.</p>}</aside></div>
   </div>;
 }
