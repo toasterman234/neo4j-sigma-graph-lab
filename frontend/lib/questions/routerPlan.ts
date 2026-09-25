@@ -91,15 +91,10 @@ export function planRouterFollowUps(signals: RouterSignals): RouterPlan {
     add("eval_candidate", 30, "The item is technology/agent-related, actionable, and shaped like something that may become a repeatable eval/regression case.");
   }
 
-  const deferred: string[] = [];
-  if (signals.namedEntityProbability >= 0.6) {
-    deferred.push(`Named-entity presence scored ${signals.namedEntityProbability.toFixed(2)}; deterministic extraction/enrichment is not implemented in this router slice.`);
-  }
-
   return {
     triggers: Array.from(byId.values())
       .sort((left, right) => left.priority - right.priority || left.questionId.localeCompare(right.questionId))
       .slice(0, MAX_ROUTED_FOLLOWUPS),
-    deferred,
+    deferred: [],
   };
 }
