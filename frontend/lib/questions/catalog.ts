@@ -30,6 +30,7 @@ export type QuestionDefinition = {
   output: QuestionOutput;
   requiresEvidence: boolean;
   proposalPolicy?: "none" | "relationship";
+  routerOnly?: boolean;
 };
 
 export const DEFAULT_QUESTION_ID = "missing_relationship";
@@ -170,6 +171,52 @@ export const QUESTION_CATALOG: readonly QuestionDefinition[] = [
       },
     },
     requiresEvidence: true,
+  },
+  {
+    id: "intent_signal",
+    version: 1,
+    title: "Intent signal",
+    text: "What primary intent is signaled by this selected item?",
+    description: "Choose the strongest supported intent. Do not invent a commitment from a vague thought.",
+    group: "actionability",
+    mode: "item",
+    output: {
+      kind: "choice",
+      criteria: {
+        act: "The item signals an intention to do, build, buy, change, contact, or execute something.",
+        explore: "The item signals curiosity, experimentation, or trying something without a firm commitment.",
+        research: "The item asks for more information, comparison, evidence, or investigation.",
+        reflect: "The item is primarily introspective, philosophical, or self-evaluative.",
+        reference: "The item primarily records information, a quote, source, or reference without an implied action.",
+        unclear: "No single intent is sufficiently supported.",
+      },
+    },
+    requiresEvidence: true,
+    routerOnly: true,
+  },
+  {
+    id: "named_entity_signal",
+    version: 1,
+    title: "Named entity presence",
+    text: "Does this selected item contain or clearly refer to a specific named person, organization, software product/project, place, or other named entity?",
+    description: "This is only a routing signal. Do not extract or enrich the entity here.",
+    group: "classification",
+    mode: "item",
+    output: { kind: "boolean", trueLabel: "Named entity present", falseLabel: "No clear named entity" },
+    requiresEvidence: true,
+    routerOnly: true,
+  },
+  {
+    id: "prior_knowledge_signal",
+    version: 1,
+    title: "Prior knowledge dependency",
+    text: "Does this selected item explicitly or implicitly depend on, continue, revisit, compare against, update, contradict, or supersede something prior?",
+    description: "Use this only as a routing signal for graph comparison. Similar subject matter alone is not enough.",
+    group: "relationships",
+    mode: "item",
+    output: { kind: "boolean", trueLabel: "Prior knowledge likely relevant", falseLabel: "No prior dependency signaled" },
+    requiresEvidence: true,
+    routerOnly: true,
   },
   {
     id: "related_prior_knowledge",
