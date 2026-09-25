@@ -4,7 +4,7 @@ import { confidenceFromJev, evaluateJevState, type JevProviderResponse } from "@
 import { getQuestionDefinition, type QuestionDefinition } from "@/lib/questions/catalog";
 import { buildQuestionState, compileQuestionDefinitions, runCatalogQuestion, type JevRunResponse, type RoutingTrace } from "@/lib/questions/runner";
 import { extractRouterSignals, planRouterFollowUps, ROUTER_QUESTION_IDS, ROUTER_VERSION, type RouterPlan, type RouterSignals, type RouterTrigger } from "@/lib/questions/routerPlan";
-import { searchGraph, type SearchMode, type SearchResponse, type SearchScope } from "@/lib/sigmaNeo4j";
+import { hybridSearchGraph, type SearchMode, type SearchResponse, type SearchScope } from "@/lib/sigmaNeo4j";
 
 export type RouterFollowUp = {
   trigger: RouterTrigger;
@@ -29,6 +29,7 @@ export type RouterRunResponse = {
     scope: SearchScope;
     mode: SearchMode;
     counts: SearchResponse["counts"];
+    retrieval?: SearchResponse["retrieval"];
   };
   followUps: RouterFollowUp[];
 };
@@ -88,7 +89,7 @@ export async function runQuestionRouter(request: RunQuestionRouterRequest): Prom
   let graphQuery = "";
   if (graphTriggers.length) {
     graphQuery = request.graphQuery?.trim() || fallbackGraphQuery(request.itemSearch);
-    graphSearch = await searchGraph(
+    graphSearch = await hybridSearchGraph(
       graphQuery,
       request.graphScope || "whole",
       request.graphMode || "keyword",
@@ -168,6 +169,7 @@ export async function runQuestionRouter(request: RunQuestionRouterRequest): Prom
       scope: graphSearch.scope,
       mode: graphSearch.mode,
       counts: graphSearch.counts,
+      retrieval: graphSearch.retrieval,
     } : undefined,
     followUps,
   };
