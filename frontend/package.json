@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:catalog": "node scripts/verify-question-catalog.cjs",
-    "test:router": "node scripts/verify-question-router.cjs"
+    "test:router": "node scripts/verify-question-router.cjs",
+    "test:semantic": "node scripts/verify-semantic-retrieval.cjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.32.0",
