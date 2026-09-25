@@ -1,6 +1,6 @@
 import "server-only";
 
-import { runJev } from "@/lib/jev";
+import { runJev } from "@/lib/questions/runner";
 import { displayLabel, humanizeNodeTitle, humanizeRelationship } from "@/lib/documentSource";
 import { saveModelProposals, type ModelProposal } from "@/lib/proposalStore";
 import { searchGraph, type SearchMode, type SearchScope } from "@/lib/sigmaNeo4j";

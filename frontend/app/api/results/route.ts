@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { listSavedJevResults, saveJevResult } from "@/lib/resultStore";
-import type { JevRunResponse } from "@/lib/jev";
+import type { JevRunResponse } from "@/lib/questions/runner";
 import type { SearchMode, SearchScope } from "@/lib/sigmaNeo4j";
 
 export const runtime = "nodejs";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     if (!body.result || typeof body.result !== "object") return NextResponse.json({ error: "result is required" }, { status: 400 });
     const scope = scopes.has(body.scope as SearchScope) ? body.scope as SearchScope : "whole";
     const mode = modes.has(body.mode as SearchMode) ? body.mode as SearchMode : "keyword";
-    const saved = saveJevResult({ query: String(body.query || ""), scope, mode, result: body.result });
+    const saved = saveJevResult({ query: String(body.query || body.result.sourceContext?.query || ""), scope, mode, result: body.result });
     return NextResponse.json({ result: saved }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to save result" }, { status: 400 });
